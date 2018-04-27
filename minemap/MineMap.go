@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	bombRate = 25
+	bombRate = 30
 )
 
 const (
@@ -213,13 +213,15 @@ func printMap(mapa *MineMap) {
 			status := mapa.GetBlock(i, j).status
 			switch status {
 			case hidden:
-				v = "@"
+				v = "+"
 			case show:
 				switch v {
 				case "11":
 					v = "."
 				case "9":
 					v = "*"
+				case "0":
+					v = " "
 				}
 			case flag:
 				v = "P"
@@ -234,8 +236,9 @@ func printMap(mapa *MineMap) {
 func main() {
 	rand.Seed(time.Now().Unix())
 	mapa := newMineMap()
-	for i := 0; i < 10; i++ {
+	for i := -10; i < 10; i++ {
 		mapa.ShowBlock(i, i)
+		mapa.ShowBlock(-i, i)
 	}
 	printMap(mapa)
 	return
