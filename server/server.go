@@ -11,7 +11,11 @@ var clients = make(map[*websocket.Conn]bool) // connected clients
 var broadcast = make(chan Message)           // broadcast channel
 
 // Configure the upgrader
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 // Message : Define our message object
 type Message struct {
@@ -25,7 +29,6 @@ func Start() {
 	// Create a simple file server
 	fs := http.FileServer(http.Dir("./www"))
 	http.Handle("/", fs)
-
 	// Configure websocket route
 	http.HandleFunc("/ws", handleConnections)
 
@@ -34,7 +37,7 @@ func Start() {
 
 	// Start the server on localhost port 8000 and log any errors
 	log.Println("http server started on :8000")
-	err := http.ListenAndServe(":8000", nil)
+	err := http.ListenAndServe("zhaochanggeng.com:8000", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
