@@ -43,8 +43,7 @@
          }
 
          function sendmessage(){
-	   t = document.getElementById("input").value;
-           message = {Text: t};
+           message = {x:10, y:10, user: "zcg", operation:"putFlag"};
            ws.send(JSON.stringify(message));
          }
          WebSocketTest()
@@ -54,9 +53,9 @@
    <body>
 	   <h1> 欢迎来到垃圾聊天室，请尽情聊天 </h1>
 	   <div id="msgHistory"> </div>
-      <div>
+      <!-- <div>
 	      <input type="text" id="input">
-      </div>
+      </div> -->
       <div id="sse">
          <a href="javascript:sendmessage()">发送</a>
       </div>

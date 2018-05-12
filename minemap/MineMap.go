@@ -23,7 +23,7 @@ type Command struct {
 	Op   uint8
 }
 
-// ReplyMsg ...
+// ReplyCommand ...
 type ReplyCommand struct {
 	Success bool
 	X       int

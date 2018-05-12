@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -93,6 +94,7 @@ func (s *MineServer) handleMessages() {
 	for {
 		// Grab the next message from the messages channel
 		msg := <-s.cmsgs
+		fmt.Println("received message: ", msg)
 		// Send it out to every client that is currently connected
 		switch msg.operation {
 		case "clickBlock":
