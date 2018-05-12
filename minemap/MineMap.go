@@ -9,28 +9,44 @@ const (
 	bombRate = 30
 )
 
+//
 const (
-	hidden = iota
-	show
-	flag
+	ShowBlock = iota
+	PutFlag
 )
 
-// MineBlock ...
-type MineBlock struct {
-	value  uint8 // 9 as a bumb, 11 as unknown(border condition)
-	status uint8
-	user   string
+// Command ...
+type Command struct {
+	X    int
+	Y    int
+	User string
+	Op   uint8
+}
+
+// ReplyMsg ...
+type ReplyCommand struct {
+	Success bool
+	X       int
+	Y       int
+	Value   uint8
+	Status  string
+	User    string
 }
 
 // MineMap ...
 type MineMap struct {
-	areas map[string]*MineArea
+	areas    map[string]*MineArea
+	CCommand chan Command
+	CReply   chan ReplyCommand
 }
 
 // NewMineMap ...
 func NewMineMap() *MineMap {
 	m := new(MineMap)
 	m.areas = make(map[string]*MineArea)
+	m.CCommand = make(chan Command, 100)
+	m.CReply = make(chan ReplyCommand, 100)
+	m.run()
 	return m
 }
 
@@ -69,7 +85,7 @@ func (m *MineMap) PutBlock(x, y int, b *MineBlock) {
 // ShowBlock ...
 func (m *MineMap) ShowBlock(x, y int) {
 	b := m.GetBlock(x, y)
-	if b.status == show {
+	if b.status != hidden {
 		return
 	}
 
@@ -100,6 +116,30 @@ func (m *MineMap) calcBombs(x, y int) uint8 {
 	return uint8(count)
 }
 
+// return -1: already has owner; 0 : success; 1..8 : wrong flag
+func (m *MineMap) putFlag(x, y int, user string) int {
+	b := m.GetBlock(x, y)
+	if b.status != hidden {
+		return -1
+	}
+
+	if b.value == 11 {
+		b.value = m.calcBombs(x, y)
+	}
+
+	switch b.value {
+	case 9:
+		b.status = flag
+		b.user = user
+		return 0
+
+	default:
+		b.status = show
+		b.user = user
+		return int(b.value)
+	}
+}
+
 // PrintMap ..
 func PrintMap(mapa *MineMap) {
 	for i := -20; i < 20; i++ {
@@ -126,4 +166,17 @@ func PrintMap(mapa *MineMap) {
 		}
 		fmt.Print("\n")
 	}
+}
+
+func (m *MineMap) operationLoop() {
+	fmt.Println("MineMap: operation loop begin")
+	for {
+		cmd := <-m.CCommand
+		fmt.Println("received command:", cmd)
+		m.CReply <- ReplyCommand{Success: true, X: 0, Y: 0, Value: 0, Status: "show", User: "anonymous"}
+	}
+}
+
+func (m *MineMap) run() {
+	go m.operationLoop()
 }
