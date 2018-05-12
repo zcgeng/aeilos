@@ -2,7 +2,7 @@
 <html>
    <head>
    <meta charset="utf-8">
-   <title>菜鸟教程(runoob.com)</title>
+   <title>现在还是个聊天室不过早晚要变成扫雷的!</title>
     
       <script type="text/javascript">
         var ws = null;
@@ -18,13 +18,14 @@
                ws.onopen = function()
                {
                   // Web Socket 已连接上，使用 send() 方法发送数据
-                  alert("success!");
+                  console.log("ws.onopen");
                };
                 
                ws.onmessage = function (evt) 
                { 
-                  var received_msg = evt.data;
-                  console.log(received_msg);
+		       var received_msg = JSON.parse(evt.data);
+                  // console.log(received_msg);
+		  document.getElementById("msgHistory").innerHTML += "<p>" + received_msg.Text + "<\p>";
                };
                 
                ws.onclose = function()
@@ -40,10 +41,10 @@
                alert("您的浏览器不支持 WebSocket!");
             }
          }
-         var i = 0;
+
          function sendmessage(){
-           i++;
-           message = {Email : "zzzcccggg", Username: "zzz", Message:i.toString()};
+	   t = document.getElementById("input").value;
+           message = {Text: t};
            ws.send(JSON.stringify(message));
          }
          WebSocketTest()
@@ -51,9 +52,13 @@
         
    </head>
    <body>
-   
+	   <h1> 欢迎来到垃圾聊天室，请尽情聊天 </h1>
+	   <div id="msgHistory"> </div>
+      <div>
+	      <input type="text" id="input">
+      </div>
       <div id="sse">
-         <a href="javascript:sendmessage()">发送 WebSocket</a>
+         <a href="javascript:sendmessage()">发送</a>
       </div>
       
    </body>
