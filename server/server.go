@@ -11,10 +11,10 @@ import (
 
 // Message ...
 type Message struct {
-	x         int
-	y         int
-	user      string
-	operation string
+	X         int
+	Y         int
+	User      string
+	Operation string
 }
 
 // ReplyMsg ...
@@ -96,19 +96,17 @@ func (s *MineServer) handleMessages() {
 		msg := <-s.cmsgs
 		fmt.Println("received message: ", msg)
 		// Send it out to every client that is currently connected
-		switch msg.operation {
+		switch msg.Operation {
 		case "clickBlock":
-			s.mmap.CCommand <- minemap.Command{msg.x, msg.y, msg.user, minemap.ShowBlock}
+			s.mmap.CCommand <- minemap.Command{msg.X, msg.Y, msg.User, minemap.ShowBlock}
 			<-s.mmap.CReply
 			s.bcastMsg(ReplyMsg{})
 		case "putFlag":
-			s.mmap.CCommand <- minemap.Command{msg.x, msg.y, msg.user, minemap.PutFlag}
+			s.mmap.CCommand <- minemap.Command{msg.X, msg.Y, msg.User, minemap.PutFlag}
 			<-s.mmap.CReply
 			s.bcastMsg(ReplyMsg{})
 		case "getArea":
-			return
 		default:
-			return
 		}
 
 	}
