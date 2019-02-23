@@ -5,34 +5,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"github.com/zcgeng/aeilos/minemap"
+	"github.com/zcgeng/aeilos/pb"
 )
-
-// Message ...
-type Message struct {
-	X         int
-	Y         int
-	User      string
-	Operation string
-}
-
-// ReplyMsg ...
-type ReplyMsg struct {
-	Success bool
-	X       int
-	Y       int
-	Value   uint8
-	Status  string
-	User    string
-}
 
 // MineServer ...
 type MineServer struct {
 	mmap     *minemap.MineMap
 	clients  map[*websocket.Conn]bool
 	upgrader websocket.Upgrader
-	cmsgs    chan Message
 }
 
 // NewMineServer ...
@@ -40,12 +23,12 @@ func NewMineServer() *MineServer {
 	ms := new(MineServer)
 	ms.mmap = minemap.NewMineMap()
 	ms.clients = make(map[*websocket.Conn]bool)
-	ms.cmsgs = make(chan Message, 100)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
 	}
+
 	return ms
 }
 
@@ -58,8 +41,8 @@ func (s *MineServer) Start() {
 	fs := http.FileServer(http.Dir("www/"))
 	http.Handle("/", http.StripPrefix("/", fs))
 
-	// Start listening for incoming chat messages
-	go s.handleMessages()
+	// start a thread to response to clients
+	go s.handleResponses()
 
 	// Start the server on localhost port 8000 and log any errors
 	log.Println("http server started on :8000")
@@ -77,49 +60,49 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	// Make sure we close the connection when the function returns
 	defer ws.Close()
-	fmt.Println("on connection")
+	fmt.Printf("on connection\n")
 
 	// Register our new client
 	s.clients[ws] = true
 
 	for {
-		var msg Message // Read in a new message as JSON and map it to a Message object
-		err := ws.ReadJSON(&msg)
+		var msg pb.ClientToServer // Read in a new message as pb and map it to a Message object
+		_, data, err := ws.ReadMessage()
 		if err != nil {
-			log.Printf("error: %v", err)
+			log.Printf("Read message error: %v", err)
+			ws.Close()
 			delete(s.clients, ws)
 			break
 		}
-		// Send the newly received message to message handler
-		s.cmsgs <- msg
-	}
-}
 
-func (s *MineServer) handleMessages() {
-	for {
-		// Grab the next message from the messages channel
-		msg := <-s.cmsgs
-		fmt.Println("received message: ", msg)
-		// Send it out to every client that is currently connected
-		switch msg.Operation {
-		case "clickBlock":
-			s.mmap.CCommand <- minemap.Command{msg.X, msg.Y, msg.User, minemap.ShowBlock}
-			<-s.mmap.CReply
-			s.bcastMsg(ReplyMsg{})
-		case "putFlag":
-			s.mmap.CCommand <- minemap.Command{msg.X, msg.Y, msg.User, minemap.PutFlag}
-			<-s.mmap.CReply
-			s.bcastMsg(ReplyMsg{})
-		case "getArea":
-		default:
+		// fmt.Printf("received data: %v\n", data)
+		err = proto.Unmarshal(data, &msg)
+		if err != nil {
+			log.Printf("unmarshal error: %v", err)
+			break
 		}
 
+		// Send the newly received message to mine engine
+		s.mmap.CCommand <- &msg
 	}
 }
 
-func (s *MineServer) bcastMsg(rmsg ReplyMsg) {
+func (s *MineServer) handleResponses() {
+	for {
+		rmsg := <-s.mmap.CReply
+		data, err := proto.Marshal(rmsg)
+		if err != nil {
+			log.Fatalf("Marshal error: %v", err)
+			return
+		}
+		fmt.Printf("broadcasting: [%v]\n", rmsg)
+		s.bcastMsg(data)
+	}
+}
+
+func (s *MineServer) bcastMsg(data []byte) {
 	for client := range s.clients {
-		err := client.WriteJSON(rmsg)
+		err := client.WriteMessage(websocket.BinaryMessage, data)
 		if err != nil {
 			log.Printf("error: %v", err)
 			client.Close()

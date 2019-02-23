@@ -1,24 +1,21 @@
 syntax = "proto3";
 package pb;
 
-message Coord {
+message Cell {
 	int64 x = 1;
 	int64 y = 2;
-}
-
-message Cell {
-	Coord coord = 1;
 	oneof CellType {
-		int32 bombs = 2;
-		string flagURL = 3;
-		bool unTouched = 4;
+		int32 bombs = 3;
+		string flagURL = 4;
+		bool unTouched = 5;
 	}
 }
 
 message Area {
 	// 10 * 10 cells
-	Coord cellCoord = 1;
-	repeated Cell cells = 2;
+	int64 x = 1;
+	int64 y = 2;
+	repeated Cell cells = 3;
 }
 
 enum TouchType {
@@ -27,8 +24,9 @@ enum TouchType {
 }
 
 message TouchRequest {
-	Coord coord = 1;
-	TouchType touchType = 2;
+	int64 x = 1;
+	int64 y = 2;
+	TouchType touchType = 3;
 }
 
 enum TouchResultType {
@@ -43,15 +41,18 @@ message TouchResponse {
 	TouchResultType touchResult = 3;
 }
 
-message GetAreaRequest {
-	Coord coord = 1;
+message XY {
+	int64 x = 1;
+	int64 y = 2;
 }
 
-message GetAreaResponse {
-	Area area = 1;
+message ClientToServer {
+	oneof request {
+		TouchRequest touch = 1;
+		XY getArea = 2;
+	}
 }
 
-service TouchService {
-	rpc Touch(TouchRequest) returns (TouchResponse);
-	rpc GetArea(GetAreaRequest) returns (GetAreaResponse);
+message ServerToClient {
+	string Msg = 1;
 }

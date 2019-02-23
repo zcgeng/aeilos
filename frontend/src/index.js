@@ -1,6 +1,52 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+const pb = require('./aeilos_pb');
+
+
+class WStest extends React.Component {
+  constructor(props) {
+    super(props);
+    const socket = new WebSocket('ws://localhost:8000/ws');
+    socket.addEventListener('open', (event)=>{
+      let msg = new pb.ClientToServer();
+      let touch = new pb.TouchRequest();
+      touch.setX(10);
+      touch.setY(10);
+      touch.setTouchtype(pb.TouchType.FLIP)
+      msg.setTouch(touch);
+      socket.send(msg.serializeBinary());
+    });
+
+    var that = this;
+    socket.addEventListener('message', function (event) {
+      var blob = event.data;
+      var fileReader     = new FileReader();
+      fileReader.onload  = function(event) {
+          let msg = pb.ServerToClient.deserializeBinary(event.target.result);
+          that.setState({
+            hello: that.state.hello + ' ' + msg.getMsg(),
+          });
+      };
+      fileReader.readAsArrayBuffer(blob);
+    });
+
+
+
+    this.state = {
+      hello: "hello",
+    };
+  }
+
+  render() {
+    return (
+      <div>
+        {this.state.hello}
+      </div>
+    );
+  }
+}
+
 
 function Square(props) {
   return (
@@ -149,6 +195,7 @@ class Game extends React.Component {
 // ========================================
 
 ReactDOM.render(
-  <Game />,
+  // <Game />,
+  <WStest />,
   document.getElementById('root')
 );

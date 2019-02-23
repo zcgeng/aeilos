@@ -3,6 +3,8 @@ package minemap
 import (
 	"fmt"
 	"strconv"
+
+	pb "github.com/zcgeng/aeilos/pb"
 )
 
 const (
@@ -15,37 +17,19 @@ const (
 	PutFlag
 )
 
-// Command ...
-type Command struct {
-	X    int
-	Y    int
-	User string
-	Op   uint8
-}
-
-// ReplyCommand ...
-type ReplyCommand struct {
-	Success bool
-	X       int
-	Y       int
-	Value   uint8
-	Status  string
-	User    string
-}
-
 // MineMap ...
 type MineMap struct {
 	areas    map[string]*MineArea
-	CCommand chan Command
-	CReply   chan ReplyCommand
+	CCommand chan *pb.ClientToServer
+	CReply   chan *pb.ServerToClient
 }
 
 // NewMineMap ...
 func NewMineMap() *MineMap {
 	m := new(MineMap)
 	m.areas = make(map[string]*MineArea)
-	m.CCommand = make(chan Command, 100)
-	m.CReply = make(chan ReplyCommand, 100)
+	m.CCommand = make(chan *pb.ClientToServer, 100)
+	m.CReply = make(chan *pb.ServerToClient, 100)
 	m.run()
 	return m
 }
@@ -172,8 +156,11 @@ func (m *MineMap) operationLoop() {
 	fmt.Println("MineMap: operation loop begin")
 	for {
 		cmd := <-m.CCommand
-		fmt.Println("received command:", cmd)
-		m.CReply <- ReplyCommand{Success: true, X: 0, Y: 0, Value: 0, Status: "show", User: "anonymous"}
+		fmt.Printf("received command: %v\n", cmd)
+		m.CReply <- &pb.ServerToClient{Msg: "hello world"}
+		for i := 0; i < 100; i++ {
+			m.CReply <- &pb.ServerToClient{Msg: "hello world " + strconv.Itoa(i)}
+		}
 	}
 }
 

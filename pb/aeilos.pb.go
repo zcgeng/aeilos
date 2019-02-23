@@ -4,10 +4,8 @@
 package pb
 
 import (
-	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	grpc "google.golang.org/grpc"
 	math "math"
 )
 
@@ -75,55 +73,9 @@ func (TouchResultType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_1a1d8450cb7e47f3, []int{1}
 }
 
-type Coord struct {
-	X                    int64    `protobuf:"varint,1,opt,name=x,proto3" json:"x,omitempty"`
-	Y                    int64    `protobuf:"varint,2,opt,name=y,proto3" json:"y,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Coord) Reset()         { *m = Coord{} }
-func (m *Coord) String() string { return proto.CompactTextString(m) }
-func (*Coord) ProtoMessage()    {}
-func (*Coord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a1d8450cb7e47f3, []int{0}
-}
-
-func (m *Coord) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Coord.Unmarshal(m, b)
-}
-func (m *Coord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Coord.Marshal(b, m, deterministic)
-}
-func (m *Coord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Coord.Merge(m, src)
-}
-func (m *Coord) XXX_Size() int {
-	return xxx_messageInfo_Coord.Size(m)
-}
-func (m *Coord) XXX_DiscardUnknown() {
-	xxx_messageInfo_Coord.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Coord proto.InternalMessageInfo
-
-func (m *Coord) GetX() int64 {
-	if m != nil {
-		return m.X
-	}
-	return 0
-}
-
-func (m *Coord) GetY() int64 {
-	if m != nil {
-		return m.Y
-	}
-	return 0
-}
-
 type Cell struct {
-	Coord *Coord `protobuf:"bytes,1,opt,name=coord,proto3" json:"coord,omitempty"`
+	X int64 `protobuf:"varint,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y int64 `protobuf:"varint,2,opt,name=y,proto3" json:"y,omitempty"`
 	// Types that are valid to be assigned to CellType:
 	//	*Cell_Bombs
 	//	*Cell_FlagURL
@@ -138,7 +90,7 @@ func (m *Cell) Reset()         { *m = Cell{} }
 func (m *Cell) String() string { return proto.CompactTextString(m) }
 func (*Cell) ProtoMessage()    {}
 func (*Cell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a1d8450cb7e47f3, []int{1}
+	return fileDescriptor_1a1d8450cb7e47f3, []int{0}
 }
 
 func (m *Cell) XXX_Unmarshal(b []byte) error {
@@ -159,11 +111,18 @@ func (m *Cell) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Cell proto.InternalMessageInfo
 
-func (m *Cell) GetCoord() *Coord {
+func (m *Cell) GetX() int64 {
 	if m != nil {
-		return m.Coord
+		return m.X
 	}
-	return nil
+	return 0
+}
+
+func (m *Cell) GetY() int64 {
+	if m != nil {
+		return m.Y
+	}
+	return 0
 }
 
 type isCell_CellType interface {
@@ -171,15 +130,15 @@ type isCell_CellType interface {
 }
 
 type Cell_Bombs struct {
-	Bombs int32 `protobuf:"varint,2,opt,name=bombs,proto3,oneof"`
+	Bombs int32 `protobuf:"varint,3,opt,name=bombs,proto3,oneof"`
 }
 
 type Cell_FlagURL struct {
-	FlagURL string `protobuf:"bytes,3,opt,name=flagURL,proto3,oneof"`
+	FlagURL string `protobuf:"bytes,4,opt,name=flagURL,proto3,oneof"`
 }
 
 type Cell_UnTouched struct {
-	UnTouched bool `protobuf:"varint,4,opt,name=unTouched,proto3,oneof"`
+	UnTouched bool `protobuf:"varint,5,opt,name=unTouched,proto3,oneof"`
 }
 
 func (*Cell_Bombs) isCell_CellType() {}
@@ -226,8 +185,10 @@ func (*Cell) XXX_OneofWrappers() []interface{} {
 }
 
 type Area struct {
-	CellCoord            *Coord   `protobuf:"bytes,1,opt,name=cellCoord,proto3" json:"cellCoord,omitempty"`
-	Cells                []*Cell  `protobuf:"bytes,2,rep,name=cells,proto3" json:"cells,omitempty"`
+	// 10 * 10 cells
+	X                    int64    `protobuf:"varint,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y                    int64    `protobuf:"varint,2,opt,name=y,proto3" json:"y,omitempty"`
+	Cells                []*Cell  `protobuf:"bytes,3,rep,name=cells,proto3" json:"cells,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -237,7 +198,7 @@ func (m *Area) Reset()         { *m = Area{} }
 func (m *Area) String() string { return proto.CompactTextString(m) }
 func (*Area) ProtoMessage()    {}
 func (*Area) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a1d8450cb7e47f3, []int{2}
+	return fileDescriptor_1a1d8450cb7e47f3, []int{1}
 }
 
 func (m *Area) XXX_Unmarshal(b []byte) error {
@@ -258,11 +219,18 @@ func (m *Area) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Area proto.InternalMessageInfo
 
-func (m *Area) GetCellCoord() *Coord {
+func (m *Area) GetX() int64 {
 	if m != nil {
-		return m.CellCoord
+		return m.X
 	}
-	return nil
+	return 0
+}
+
+func (m *Area) GetY() int64 {
+	if m != nil {
+		return m.Y
+	}
+	return 0
 }
 
 func (m *Area) GetCells() []*Cell {
@@ -273,8 +241,9 @@ func (m *Area) GetCells() []*Cell {
 }
 
 type TouchRequest struct {
-	Coord                *Coord    `protobuf:"bytes,1,opt,name=coord,proto3" json:"coord,omitempty"`
-	TouchType            TouchType `protobuf:"varint,2,opt,name=touchType,proto3,enum=pb.TouchType" json:"touchType,omitempty"`
+	X                    int64     `protobuf:"varint,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y                    int64     `protobuf:"varint,2,opt,name=y,proto3" json:"y,omitempty"`
+	TouchType            TouchType `protobuf:"varint,3,opt,name=touchType,proto3,enum=pb.TouchType" json:"touchType,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
@@ -284,7 +253,7 @@ func (m *TouchRequest) Reset()         { *m = TouchRequest{} }
 func (m *TouchRequest) String() string { return proto.CompactTextString(m) }
 func (*TouchRequest) ProtoMessage()    {}
 func (*TouchRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a1d8450cb7e47f3, []int{3}
+	return fileDescriptor_1a1d8450cb7e47f3, []int{2}
 }
 
 func (m *TouchRequest) XXX_Unmarshal(b []byte) error {
@@ -305,11 +274,18 @@ func (m *TouchRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_TouchRequest proto.InternalMessageInfo
 
-func (m *TouchRequest) GetCoord() *Coord {
+func (m *TouchRequest) GetX() int64 {
 	if m != nil {
-		return m.Coord
+		return m.X
 	}
-	return nil
+	return 0
+}
+
+func (m *TouchRequest) GetY() int64 {
+	if m != nil {
+		return m.Y
+	}
+	return 0
 }
 
 func (m *TouchRequest) GetTouchType() TouchType {
@@ -332,7 +308,7 @@ func (m *TouchResponse) Reset()         { *m = TouchResponse{} }
 func (m *TouchResponse) String() string { return proto.CompactTextString(m) }
 func (*TouchResponse) ProtoMessage()    {}
 func (*TouchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1a1d8450cb7e47f3, []int{4}
+	return fileDescriptor_1a1d8450cb7e47f3, []int{3}
 }
 
 func (m *TouchResponse) XXX_Unmarshal(b []byte) error {
@@ -374,231 +350,212 @@ func (m *TouchResponse) GetTouchResult() TouchResultType {
 	return TouchResultType_CORRECT
 }
 
-type GetAreaRequest struct {
-	Coord                *Coord   `protobuf:"bytes,1,opt,name=coord,proto3" json:"coord,omitempty"`
+type XY struct {
+	X                    int64    `protobuf:"varint,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y                    int64    `protobuf:"varint,2,opt,name=y,proto3" json:"y,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetAreaRequest) Reset()         { *m = GetAreaRequest{} }
-func (m *GetAreaRequest) String() string { return proto.CompactTextString(m) }
-func (*GetAreaRequest) ProtoMessage()    {}
-func (*GetAreaRequest) Descriptor() ([]byte, []int) {
+func (m *XY) Reset()         { *m = XY{} }
+func (m *XY) String() string { return proto.CompactTextString(m) }
+func (*XY) ProtoMessage()    {}
+func (*XY) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1a1d8450cb7e47f3, []int{4}
+}
+
+func (m *XY) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_XY.Unmarshal(m, b)
+}
+func (m *XY) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_XY.Marshal(b, m, deterministic)
+}
+func (m *XY) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_XY.Merge(m, src)
+}
+func (m *XY) XXX_Size() int {
+	return xxx_messageInfo_XY.Size(m)
+}
+func (m *XY) XXX_DiscardUnknown() {
+	xxx_messageInfo_XY.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_XY proto.InternalMessageInfo
+
+func (m *XY) GetX() int64 {
+	if m != nil {
+		return m.X
+	}
+	return 0
+}
+
+func (m *XY) GetY() int64 {
+	if m != nil {
+		return m.Y
+	}
+	return 0
+}
+
+type ClientToServer struct {
+	// Types that are valid to be assigned to Request:
+	//	*ClientToServer_Touch
+	//	*ClientToServer_GetArea
+	Request              isClientToServer_Request `protobuf_oneof:"request"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
+}
+
+func (m *ClientToServer) Reset()         { *m = ClientToServer{} }
+func (m *ClientToServer) String() string { return proto.CompactTextString(m) }
+func (*ClientToServer) ProtoMessage()    {}
+func (*ClientToServer) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1a1d8450cb7e47f3, []int{5}
 }
 
-func (m *GetAreaRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAreaRequest.Unmarshal(m, b)
+func (m *ClientToServer) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ClientToServer.Unmarshal(m, b)
 }
-func (m *GetAreaRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAreaRequest.Marshal(b, m, deterministic)
+func (m *ClientToServer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ClientToServer.Marshal(b, m, deterministic)
 }
-func (m *GetAreaRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAreaRequest.Merge(m, src)
+func (m *ClientToServer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClientToServer.Merge(m, src)
 }
-func (m *GetAreaRequest) XXX_Size() int {
-	return xxx_messageInfo_GetAreaRequest.Size(m)
+func (m *ClientToServer) XXX_Size() int {
+	return xxx_messageInfo_ClientToServer.Size(m)
 }
-func (m *GetAreaRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAreaRequest.DiscardUnknown(m)
+func (m *ClientToServer) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClientToServer.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetAreaRequest proto.InternalMessageInfo
+var xxx_messageInfo_ClientToServer proto.InternalMessageInfo
 
-func (m *GetAreaRequest) GetCoord() *Coord {
+type isClientToServer_Request interface {
+	isClientToServer_Request()
+}
+
+type ClientToServer_Touch struct {
+	Touch *TouchRequest `protobuf:"bytes,1,opt,name=touch,proto3,oneof"`
+}
+
+type ClientToServer_GetArea struct {
+	GetArea *XY `protobuf:"bytes,2,opt,name=getArea,proto3,oneof"`
+}
+
+func (*ClientToServer_Touch) isClientToServer_Request() {}
+
+func (*ClientToServer_GetArea) isClientToServer_Request() {}
+
+func (m *ClientToServer) GetRequest() isClientToServer_Request {
 	if m != nil {
-		return m.Coord
+		return m.Request
 	}
 	return nil
 }
 
-type GetAreaResponse struct {
-	Area                 *Area    `protobuf:"bytes,1,opt,name=area,proto3" json:"area,omitempty"`
+func (m *ClientToServer) GetTouch() *TouchRequest {
+	if x, ok := m.GetRequest().(*ClientToServer_Touch); ok {
+		return x.Touch
+	}
+	return nil
+}
+
+func (m *ClientToServer) GetGetArea() *XY {
+	if x, ok := m.GetRequest().(*ClientToServer_GetArea); ok {
+		return x.GetArea
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ClientToServer) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*ClientToServer_Touch)(nil),
+		(*ClientToServer_GetArea)(nil),
+	}
+}
+
+type ServerToClient struct {
+	Msg                  string   `protobuf:"bytes,1,opt,name=Msg,proto3" json:"Msg,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetAreaResponse) Reset()         { *m = GetAreaResponse{} }
-func (m *GetAreaResponse) String() string { return proto.CompactTextString(m) }
-func (*GetAreaResponse) ProtoMessage()    {}
-func (*GetAreaResponse) Descriptor() ([]byte, []int) {
+func (m *ServerToClient) Reset()         { *m = ServerToClient{} }
+func (m *ServerToClient) String() string { return proto.CompactTextString(m) }
+func (*ServerToClient) ProtoMessage()    {}
+func (*ServerToClient) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1a1d8450cb7e47f3, []int{6}
 }
 
-func (m *GetAreaResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAreaResponse.Unmarshal(m, b)
+func (m *ServerToClient) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ServerToClient.Unmarshal(m, b)
 }
-func (m *GetAreaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAreaResponse.Marshal(b, m, deterministic)
+func (m *ServerToClient) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ServerToClient.Marshal(b, m, deterministic)
 }
-func (m *GetAreaResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAreaResponse.Merge(m, src)
+func (m *ServerToClient) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ServerToClient.Merge(m, src)
 }
-func (m *GetAreaResponse) XXX_Size() int {
-	return xxx_messageInfo_GetAreaResponse.Size(m)
+func (m *ServerToClient) XXX_Size() int {
+	return xxx_messageInfo_ServerToClient.Size(m)
 }
-func (m *GetAreaResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAreaResponse.DiscardUnknown(m)
+func (m *ServerToClient) XXX_DiscardUnknown() {
+	xxx_messageInfo_ServerToClient.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetAreaResponse proto.InternalMessageInfo
+var xxx_messageInfo_ServerToClient proto.InternalMessageInfo
 
-func (m *GetAreaResponse) GetArea() *Area {
+func (m *ServerToClient) GetMsg() string {
 	if m != nil {
-		return m.Area
+		return m.Msg
 	}
-	return nil
+	return ""
 }
 
 func init() {
 	proto.RegisterEnum("pb.TouchType", TouchType_name, TouchType_value)
 	proto.RegisterEnum("pb.TouchResultType", TouchResultType_name, TouchResultType_value)
-	proto.RegisterType((*Coord)(nil), "pb.Coord")
 	proto.RegisterType((*Cell)(nil), "pb.Cell")
 	proto.RegisterType((*Area)(nil), "pb.Area")
 	proto.RegisterType((*TouchRequest)(nil), "pb.TouchRequest")
 	proto.RegisterType((*TouchResponse)(nil), "pb.TouchResponse")
-	proto.RegisterType((*GetAreaRequest)(nil), "pb.GetAreaRequest")
-	proto.RegisterType((*GetAreaResponse)(nil), "pb.GetAreaResponse")
+	proto.RegisterType((*XY)(nil), "pb.XY")
+	proto.RegisterType((*ClientToServer)(nil), "pb.ClientToServer")
+	proto.RegisterType((*ServerToClient)(nil), "pb.ServerToClient")
 }
 
 func init() { proto.RegisterFile("aeilos.proto", fileDescriptor_1a1d8450cb7e47f3) }
 
 var fileDescriptor_1a1d8450cb7e47f3 = []byte{
-	// 435 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0x5d, 0x6f, 0xd3, 0x40,
-	0x10, 0xf4, 0x25, 0x3e, 0x12, 0x6f, 0xd2, 0xd4, 0x6c, 0x11, 0x8a, 0xa2, 0xaa, 0x8d, 0xcc, 0x03,
-	0x51, 0x41, 0x41, 0x18, 0xf8, 0x01, 0xa9, 0x05, 0x09, 0x52, 0x45, 0xd0, 0x61, 0xc4, 0x0b, 0x2f,
-	0xb6, 0x7b, 0x40, 0xa5, 0xa3, 0x67, 0xfc, 0x81, 0x1a, 0xfe, 0x00, 0x7f, 0x1b, 0xdd, 0x9e, 0x9b,
-	0x38, 0x08, 0x89, 0xbe, 0xdd, 0xcc, 0xee, 0xec, 0xce, 0xac, 0x65, 0x18, 0x26, 0xf2, 0x4a, 0xe9,
-	0x72, 0x9e, 0x17, 0xba, 0xd2, 0xd8, 0xc9, 0xd3, 0xe0, 0x11, 0xf0, 0x48, 0xeb, 0xe2, 0x12, 0x87,
-	0xc0, 0x6e, 0xc6, 0x6c, 0xca, 0x66, 0x5d, 0xc1, 0x6e, 0x0c, 0xda, 0x8c, 0x3b, 0x16, 0x6d, 0x82,
-	0xdf, 0x0c, 0xdc, 0x48, 0x2a, 0x85, 0xa7, 0xc0, 0x33, 0xd3, 0x4d, 0x8d, 0x83, 0xd0, 0x9b, 0xe7,
-	0xe9, 0x9c, 0xe4, 0xc2, 0xf2, 0xf8, 0x10, 0x78, 0xaa, 0xbf, 0xa7, 0x25, 0x69, 0xf9, 0xca, 0x11,
-	0x16, 0xe2, 0x04, 0x7a, 0x5f, 0x54, 0xf2, 0xf5, 0xa3, 0xb8, 0x18, 0x77, 0xa7, 0x6c, 0xe6, 0xad,
-	0x1c, 0x71, 0x4b, 0xe0, 0x09, 0x78, 0xf5, 0x75, 0xac, 0xeb, 0xec, 0x9b, 0xbc, 0x1c, 0xbb, 0x53,
-	0x36, 0xeb, 0xaf, 0x1c, 0xb1, 0xa3, 0xce, 0x01, 0xfa, 0x66, 0x79, 0xbc, 0xc9, 0x65, 0xb0, 0x06,
-	0x77, 0x51, 0xc8, 0x04, 0x1f, 0x83, 0x97, 0x49, 0xa5, 0xa2, 0x7f, 0x9b, 0xd9, 0xd5, 0xf0, 0x04,
-	0xb8, 0x01, 0xc6, 0x50, 0x77, 0x36, 0x08, 0xfb, 0xd4, 0x24, 0x95, 0x12, 0x96, 0x0e, 0x3e, 0xc3,
-	0x90, 0xf6, 0x08, 0xf9, 0xa3, 0x96, 0x65, 0xf5, 0xff, 0x84, 0x4f, 0xc0, 0xab, 0x8c, 0xc0, 0xd8,
-	0xa1, 0x94, 0xa3, 0xf0, 0xc0, 0x34, 0xc5, 0xb7, 0xa4, 0xd8, 0xd5, 0x83, 0x5f, 0x70, 0xd0, 0x4c,
-	0x2f, 0x73, 0x7d, 0x5d, 0x4a, 0x7c, 0x00, 0xbc, 0xcc, 0x74, 0x21, 0x69, 0x3c, 0x17, 0x16, 0xe0,
-	0x31, 0xb8, 0xc6, 0x0d, 0x8d, 0x6b, 0x7b, 0x24, 0x16, 0x5f, 0xc1, 0xa0, 0x6a, 0x86, 0xd4, 0xaa,
-	0xa2, 0xfb, 0x8d, 0xc2, 0xa3, 0xed, 0x4e, 0x4b, 0xd3, 0xe6, 0x76, 0x5f, 0xf0, 0x1c, 0x46, 0x4b,
-	0x59, 0x99, 0x6b, 0xdd, 0x35, 0x5b, 0xf0, 0x0c, 0x0e, 0xb7, 0x92, 0xc6, 0xf0, 0x31, 0xb8, 0x49,
-	0x21, 0x93, 0x46, 0x42, 0xd6, 0xa8, 0x4e, 0xec, 0xd9, 0x29, 0x78, 0xdb, 0xdc, 0xd8, 0x07, 0xf7,
-	0xcd, 0xc5, 0xdb, 0xf7, 0xbe, 0x63, 0x5f, 0x8b, 0xa5, 0xcf, 0xce, 0x5e, 0xc2, 0xe1, 0x5f, 0x26,
-	0x71, 0x00, 0xbd, 0x68, 0x2d, 0xc4, 0xeb, 0x28, 0xf6, 0x1d, 0xf4, 0x80, 0x7f, 0x12, 0xeb, 0x77,
-	0x4b, 0x9f, 0x99, 0xe7, 0xe2, 0x7c, 0x2d, 0x62, 0xbf, 0x13, 0xe6, 0xcd, 0x47, 0xf9, 0x20, 0x8b,
-	0x9f, 0x57, 0x99, 0xc4, 0xa7, 0xc0, 0x09, 0xa3, 0xdf, 0x4a, 0x4d, 0x99, 0x26, 0xf7, 0xdb, 0x77,
-	0xb0, 0x96, 0x43, 0xe8, 0x35, 0x29, 0x10, 0x4d, 0x75, 0xff, 0x0a, 0x93, 0xa3, 0x3d, 0xce, 0x6a,
-	0xd2, 0x7b, 0xf4, 0x47, 0xbc, 0xf8, 0x13, 0x00, 0x00, 0xff, 0xff, 0x14, 0x19, 0x0f, 0x83, 0x21,
-	0x03, 0x00, 0x00,
-}
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// TouchServiceClient is the client API for TouchService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type TouchServiceClient interface {
-	Touch(ctx context.Context, in *TouchRequest, opts ...grpc.CallOption) (*TouchResponse, error)
-	GetArea(ctx context.Context, in *GetAreaRequest, opts ...grpc.CallOption) (*GetAreaResponse, error)
-}
-
-type touchServiceClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewTouchServiceClient(cc *grpc.ClientConn) TouchServiceClient {
-	return &touchServiceClient{cc}
-}
-
-func (c *touchServiceClient) Touch(ctx context.Context, in *TouchRequest, opts ...grpc.CallOption) (*TouchResponse, error) {
-	out := new(TouchResponse)
-	err := c.cc.Invoke(ctx, "/pb.TouchService/Touch", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *touchServiceClient) GetArea(ctx context.Context, in *GetAreaRequest, opts ...grpc.CallOption) (*GetAreaResponse, error) {
-	out := new(GetAreaResponse)
-	err := c.cc.Invoke(ctx, "/pb.TouchService/GetArea", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// TouchServiceServer is the server API for TouchService service.
-type TouchServiceServer interface {
-	Touch(context.Context, *TouchRequest) (*TouchResponse, error)
-	GetArea(context.Context, *GetAreaRequest) (*GetAreaResponse, error)
-}
-
-func RegisterTouchServiceServer(s *grpc.Server, srv TouchServiceServer) {
-	s.RegisterService(&_TouchService_serviceDesc, srv)
-}
-
-func _TouchService_Touch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TouchRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TouchServiceServer).Touch(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.TouchService/Touch",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TouchServiceServer).Touch(ctx, req.(*TouchRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TouchService_GetArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAreaRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TouchServiceServer).GetArea(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.TouchService/GetArea",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TouchServiceServer).GetArea(ctx, req.(*GetAreaRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _TouchService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.TouchService",
-	HandlerType: (*TouchServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Touch",
-			Handler:    _TouchService_Touch_Handler,
-		},
-		{
-			MethodName: "GetArea",
-			Handler:    _TouchService_GetArea_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "aeilos.proto",
+	// 411 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x92, 0x4d, 0x8f, 0xd3, 0x30,
+	0x10, 0x86, 0xe3, 0x24, 0xde, 0x24, 0x93, 0x6e, 0x89, 0x0c, 0x42, 0x11, 0x42, 0x4b, 0xe4, 0x53,
+	0xb4, 0x48, 0x3d, 0x14, 0xf8, 0x01, 0x4d, 0x04, 0x5b, 0xa4, 0x85, 0x22, 0x13, 0xb4, 0xed, 0xb1,
+	0x29, 0xa6, 0x54, 0x32, 0x75, 0xc8, 0x07, 0x6a, 0x39, 0xf2, 0xcb, 0x91, 0xed, 0xf4, 0x43, 0x7b,
+	0xe8, 0x6d, 0xe6, 0xf5, 0xf8, 0x7d, 0x66, 0xc6, 0x86, 0xc1, 0x92, 0x6f, 0x84, 0x6c, 0x46, 0x55,
+	0x2d, 0x5b, 0x49, 0xec, 0xaa, 0xa4, 0xff, 0x10, 0xb8, 0x39, 0x17, 0x82, 0x0c, 0x00, 0xed, 0x62,
+	0x94, 0xa0, 0xd4, 0x61, 0x68, 0xa7, 0xb2, 0x7d, 0x6c, 0x9b, 0x6c, 0x4f, 0x9e, 0x03, 0x2e, 0xe5,
+	0xaf, 0xb2, 0x89, 0x9d, 0x04, 0xa5, 0x78, 0x6a, 0x31, 0x93, 0x92, 0x17, 0xe0, 0xfd, 0x10, 0xcb,
+	0xf5, 0x37, 0x76, 0x1f, 0xbb, 0x09, 0x4a, 0x83, 0xa9, 0xc5, 0x0e, 0x02, 0xb9, 0x81, 0xa0, 0xdb,
+	0x16, 0xb2, 0x5b, 0xfd, 0xe4, 0xdf, 0x63, 0x9c, 0xa0, 0xd4, 0x9f, 0x5a, 0xec, 0x24, 0x65, 0x00,
+	0xbe, 0xe2, 0x16, 0xfb, 0x8a, 0xd3, 0x0c, 0xdc, 0x49, 0xcd, 0x97, 0x17, 0x7b, 0xb8, 0x01, 0xbc,
+	0xe2, 0x42, 0xa8, 0x1e, 0x9c, 0x34, 0x1c, 0xfb, 0xa3, 0xaa, 0x1c, 0x29, 0x03, 0x66, 0x64, 0xfa,
+	0x00, 0x03, 0x6d, 0xcd, 0xf8, 0xef, 0x8e, 0x37, 0xed, 0x45, 0xaf, 0xd7, 0x10, 0xb4, 0xaa, 0x56,
+	0xc1, 0xf5, 0x4c, 0xc3, 0xf1, 0xb5, 0xf2, 0x2b, 0x0e, 0x22, 0x3b, 0x9d, 0xd3, 0xbf, 0x70, 0xdd,
+	0x1b, 0x37, 0x95, 0xdc, 0x36, 0x9c, 0x3c, 0x03, 0xdc, 0xac, 0x64, 0xcd, 0xb5, 0x3b, 0x66, 0x26,
+	0x21, 0x2f, 0xc1, 0x55, 0x8d, 0x68, 0xc8, 0x79, 0x7b, 0x5a, 0x25, 0xef, 0x20, 0x6c, 0x7b, 0x93,
+	0x4e, 0xb4, 0x3d, 0xf3, 0xe9, 0x91, 0x69, 0x64, 0x4d, 0x3e, 0xaf, 0xa3, 0x09, 0xd8, 0xf3, 0xc5,
+	0xa5, 0x51, 0xe8, 0x06, 0x86, 0xb9, 0xd8, 0xf0, 0x6d, 0x5b, 0xc8, 0xaf, 0xbc, 0xfe, 0xc3, 0x6b,
+	0x92, 0x02, 0xd6, 0x16, 0xfa, 0x46, 0x38, 0x8e, 0xce, 0x20, 0x7a, 0x33, 0xea, 0xf9, 0x74, 0x01,
+	0xa1, 0xe0, 0xad, 0x79, 0xab, 0x36, 0xdf, 0x77, 0x7d, 0xa5, 0x6a, 0xe7, 0x0b, 0xf5, 0x8c, 0xfd,
+	0x41, 0x16, 0x80, 0x57, 0x9b, 0x7b, 0x94, 0xc2, 0xd0, 0x20, 0x0a, 0x69, 0x90, 0x24, 0x02, 0xe7,
+	0x53, 0xb3, 0xd6, 0xa0, 0x80, 0xa9, 0xf0, 0xf6, 0x15, 0x04, 0xc7, 0x25, 0x12, 0x1f, 0xdc, 0x0f,
+	0xf7, 0x1f, 0xbf, 0x44, 0x96, 0x89, 0x26, 0x77, 0x11, 0xba, 0x7d, 0x0b, 0x4f, 0x1e, 0x4d, 0x4c,
+	0x42, 0xf0, 0xf2, 0x19, 0x63, 0xef, 0xf3, 0x22, 0xb2, 0x48, 0x00, 0xf8, 0x81, 0xcd, 0x3e, 0xdf,
+	0x45, 0x48, 0x85, 0x93, 0x6c, 0xc6, 0x8a, 0xc8, 0x2e, 0xaf, 0xf4, 0x87, 0x7d, 0xf3, 0x3f, 0x00,
+	0x00, 0xff, 0xff, 0x9c, 0x49, 0x48, 0x86, 0xc0, 0x02, 0x00, 0x00,
 }
