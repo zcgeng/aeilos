@@ -1,0 +1,57 @@
+syntax = "proto3";
+package pb;
+
+message Coord {
+	int64 x = 1;
+	int64 y = 2;
+}
+
+message Cell {
+	Coord coord = 1;
+	oneof CellType {
+		int32 bombs = 2;
+		string flagURL = 3;
+		bool unTouched = 4;
+	}
+}
+
+message Area {
+	// 10 * 10 cells
+	Coord cellCoord = 1;
+	repeated Cell cells = 2;
+}
+
+enum TouchType {
+	FLIP = 0;
+	FLAG = 1;
+}
+
+message TouchRequest {
+	Coord coord = 1;
+	TouchType touchType = 2;
+}
+
+enum TouchResultType {
+	CORRECT = 0;
+	WRONG = 1;
+	ABORT = 2;
+}
+
+message TouchResponse {
+	int32 score = 1;
+	Cell cell = 2;
+	TouchResultType touchResult = 3;
+}
+
+message GetAreaRequest {
+	Coord coord = 1;
+}
+
+message GetAreaResponse {
+	Area area = 1;
+}
+
+service TouchService {
+	rpc Touch(TouchRequest) returns (TouchResponse);
+	rpc GetArea(GetAreaRequest) returns (GetAreaResponse);
+}

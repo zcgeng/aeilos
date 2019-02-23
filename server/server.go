@@ -54,6 +54,10 @@ func (s *MineServer) Start() {
 	// Configure websocket route
 	http.HandleFunc("/ws", s.handleConnections)
 
+	// start a file server
+	fs := http.FileServer(http.Dir("www/"))
+	http.Handle("/", http.StripPrefix("/", fs))
+
 	// Start listening for incoming chat messages
 	go s.handleMessages()
 
@@ -73,6 +77,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	// Make sure we close the connection when the function returns
 	defer ws.Close()
+	fmt.Println("on connection")
 
 	// Register our new client
 	s.clients[ws] = true
