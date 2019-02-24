@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	bombRate = 30
+	bombRate = 20
 )
 
 //

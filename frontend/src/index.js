@@ -7,6 +7,7 @@ const pb = require('./aeilos_pb');
 function getCellDesc(pbcell) {
   switch(pbcell.getCelltypeCase()) {
     case pb.Cell.CelltypeCase.BOMBS:
+      if(pbcell.getBombs() === 0) return '0';
       if(pbcell.getBombs() === 9) return '*';
       if(pbcell.getBombs() === 11) return '??';
       return pbcell.getBombs();
@@ -31,15 +32,6 @@ class Aeilos extends React.Component {
       xy.setY(0);
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
-
-
-      let msg2 = new pb.ClientToServer();
-      let touch = new pb.TouchRequest();
-      touch.setX(8);
-      touch.setY(2);
-      touch.setTouchtype(pb.TouchType.FLIP);
-      msg2.setTouch(touch);
-      socket.send(msg2.serializeBinary());
     });
 
     var that = this;
@@ -57,6 +49,7 @@ class Aeilos extends React.Component {
               that.setState({
                 curArea: newArea,
                 baseXY: that.state.baseXY,
+                socket: that.state.socket,
               })
               break;
             case pb.ServerToClient.ResponseCase.AREA:
@@ -69,6 +62,7 @@ class Aeilos extends React.Component {
               that.setState({
                 curArea: cells2d,
                 baseXY: {x: response.getArea().getX(), y: response.getArea().getY()},
+                socket: that.state.socket,
               });
               break;
             case pb.ServerToClient.ResponseCase.MSG:
@@ -82,9 +76,21 @@ class Aeilos extends React.Component {
     });
 
     this.state = {
+      socket: socket,
       baseXY: {x: 0, y:0},
       curArea: [],
     };
+  }
+
+  handleClick(globX, globY) {
+    // global x and global y
+    let msg = new pb.ClientToServer();
+    let touch = new pb.TouchRequest();
+    touch.setX(globX);
+    touch.setY(globY);
+    touch.setTouchtype(pb.TouchType.FLIP);
+    msg.setTouch(touch);
+    this.state.socket.send(msg.serializeBinary());
   }
 
   render() {
@@ -96,7 +102,17 @@ class Aeilos extends React.Component {
 
     const cellBoard = mmap.map((row, i) => {
       const cellRow = row.map((val, j) => {
-        return <Cell key={j} value={val} x={this.state.baseXY.x+i} y={this.state.baseXY.y+j}/>
+        return <Cell 
+          key={j} 
+          value={val} 
+          x={this.state.baseXY.x+i} 
+          y={this.state.baseXY.y+j}
+          onClick={
+            ()=>{
+              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j)
+            }
+          }
+        />
       });
       return  <div key={i} className="board-row">{cellRow}</div>
     });
@@ -108,29 +124,15 @@ class Aeilos extends React.Component {
   }
 }
 
-class Cell extends React.Component{
-  constructor(props) {
-    super(props);
-    this.state = {
-      desc: this.props.value,
-      x: this.props.x,
-      y: this.props.y,
-    };
-  }
-
-  render() {
-    return (
-      <button
-        className="square"
-        onClick={()=>{
-          console.log(this.props.x, this.props.y);
-        }}
-      >
-        {this.props.value}
-      </button>
-    );
-  }
-
+function Cell(props) {
+  return (
+    <button
+      className="square"
+      onClick={props.onClick}
+    >
+      {props.value}
+    </button>
+  );
 }
 
 
