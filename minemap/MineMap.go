@@ -28,8 +28,8 @@ type MineMap struct {
 func NewMineMap() *MineMap {
 	m := new(MineMap)
 	m.areas = make(map[string]*MineArea)
-	m.CCommand = make(chan *pb.ClientToServer, 100)
-	m.CReply = make(chan *pb.ServerToClient, 100)
+	m.CCommand = make(chan *pb.ClientToServer, 1000)
+	m.CReply = make(chan *pb.ServerToClient, 1000)
 	m.run()
 	return m
 }
@@ -239,8 +239,8 @@ func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) {
 		Cells: make([]*pb.Cell, 0),
 	}
 
-	for xx := int64(0); xx < 10; xx++ {
-		for yy := int64(0); yy < 10; yy++ {
+	for xx := int64(0); xx < ROW_HEIGHT; xx++ {
+		for yy := int64(0); yy < ROW_LENGTH; yy++ {
 			area.Cells = append(area.Cells, m.getCellPB(xx+v.GetArea.GetX(), yy+v.GetArea.GetY()))
 		}
 	}

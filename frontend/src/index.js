@@ -3,8 +3,11 @@ import ReactDOM from 'react-dom';
 import './index.css';
 const pb = require('./aeilos_pb');
 
+const ROW_LENGTH = 40;
+const ROW_HEIGHT = 20;
+
 function InsideArea(x, y, ax, ay) {
-  return (x >= ax) && (y >= ay) && (x < ax+10) && (y < ay+10);
+  return (x >= ax) && (y >= ay) && (x < ax+ROW_HEIGHT) && (y < ay+ROW_LENGTH);
 }
 
 function getCellDesc(pbcell) {
@@ -30,13 +33,13 @@ class Aeilos extends React.Component {
   }
 
   renderArea(x, y) {
-    return 
+    return (<Area x={x} y={y} />)
   }
 
   render() {
     return (
       <div>
-
+        {this.renderArea(0, 0)}
       </div>
     );
   }
@@ -56,7 +59,7 @@ class Area extends React.Component {
     socket.addEventListener('open', (event)=>{
       let msg = new pb.ClientToServer();
       let xy = new pb.XY();
-      xy.setX(props.x+10);
+      xy.setX(props.x);
       xy.setY(props.y);
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
@@ -85,10 +88,10 @@ class Area extends React.Component {
 
             case pb.ServerToClient.ResponseCase.AREA:
               let cellsList = response.getArea().getCellsList();
-              // reshape the cellsList[100] to [10][10]
+              // reshape the cellsList[1500] to [ROW_LENGTH][30]
               let cells2d = [];
               while(cellsList.length) 
-                cells2d.push(cellsList.splice(0,10))
+                cells2d.push(cellsList.splice(0,ROW_LENGTH))
 
               that.setState({
                 curArea: cells2d,
@@ -107,15 +110,19 @@ class Area extends React.Component {
                 break;
               }
               
-              let newArea1 = that.state.curArea.map((arr)=>{return arr.slice();});
+              // let newArea1 = that.state.curArea.map((arr)=>{return arr.slice();});
               let xy1 = that.glob2local(cell1.getX(), cell1.getY());
-              newArea1[xy1.x][xy1.y] = cell1;
+              that.state.curArea[xy1.x][xy1.y] = cell1;
 
-              that.setState({
-                curArea: newArea1,
-                baseXY: that.state.baseXY,
-                socket: that.state.socket,
-              })
+              // var t0 = performance.now();
+              /* TOOOOOO SLOW!!!! */
+              // that.setState({
+              //   curArea: newArea1,
+              //   baseXY: that.state.baseXY,
+              //   socket: that.state.socket,
+              // })
+              // var t1 = performance.now();
+              // console.log("update takes: ", t1-t0);
               break;
             default:
               alert('error: response no type')
@@ -332,6 +339,6 @@ class Game extends React.Component {
 
 ReactDOM.render(
   // <Game />,
-  <Area x={10} y={5} />,
+  <Aeilos />,
   document.getElementById('root')
 );
