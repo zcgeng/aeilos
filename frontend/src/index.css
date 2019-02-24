@@ -30,6 +30,11 @@ ol, ul {
   padding: 0;
   text-align: center;
   width: 34px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select:none;
+  user-select:none;
+  -o-user-select:none;
 }
 
 .square:focus {

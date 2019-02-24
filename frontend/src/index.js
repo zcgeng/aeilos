@@ -27,11 +27,34 @@ function getCellDesc(pbcell) {
   }
 }
 
+function cellIsBomb(pbcell) {
+  return (pbcell.getCelltypeCase()===pb.Cell.CelltypeCase.BOMBS) && (pbcell.getBombs() === 9);
+}
+
+function cellIsNumber(pbcell) {
+  return (pbcell.getCelltypeCase()===pb.Cell.CelltypeCase.BOMBS) && (pbcell.getBombs() !== 9);
+}
+
+function cellIsFlag(pbcell) {
+  return (pbcell.getCelltypeCase()===pb.Cell.CelltypeCase.FLAGURL);
+}
+
+function cellIsBombOrFlag(pbcell) {
+  return cellIsBomb(pbcell) || cellIsFlag(pbcell);
+}
+
+function getCellNumber(pbcell) {
+  if(!cellIsNumber(pbcell)) {
+    return 0;
+  }
+  return(pbcell.getBombs());
+}
+
 class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    // const socket = new WebSocket('wss://changgeng.me/ws/');
-    const socket = new WebSocket('ws://localhost:8000/ws/');
+    const socket = new WebSocket('wss://changgeng.me/ws/');
+    // const socket = new WebSocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: 0,
@@ -138,6 +161,7 @@ class Area extends React.Component {
 
     this.state = {
       baseXY: {x: props.x, y:props.y},
+      mouseDown: {l:false, r:false},
       curArea: [],
     };
     const socket = props.socket;
@@ -170,6 +194,7 @@ class Area extends React.Component {
               newArea[x][y] = cell;
               that.setState({
                 curArea: newArea,
+                mouseDown: that.state.mouseDown,
                 baseXY: that.state.baseXY,
               })
               break;
@@ -183,6 +208,7 @@ class Area extends React.Component {
 
               that.setState({
                 curArea: cells2d,
+                mouseDown: that.state.mouseDown,
                 baseXY: {x: response.getArea().getX(), y: response.getArea().getY()},
               });
               break;
@@ -224,21 +250,107 @@ class Area extends React.Component {
     return {x: x - this.state.baseXY.x, y: y - this.state.baseXY.y};
   }
 
-  handleClick(globX, globY, e) {
+  handleMouseDown(e) {
+    if(e.nativeEvent.which === 1){
+      this.state.mouseDown.l = true
+    }
+    if(e.nativeEvent.which === 3){
+      this.state.mouseDown.r = true
+    }
+  }
+
+  // get the bomb number shown on the map
+  getNeighbourBombs(locX, locY) {
+    let bombCount = 0;
+    for(let i = -1; i < 2; i++){
+      for(let j = -1; j < 2; j++){
+        if(cellIsBombOrFlag(this.state.curArea[locX+i][locY+j])){
+          bombCount++;
+        }
+      }
+    }
+    return bombCount
+  }
+
+  handleSimulClick(globX, globY) {
+    let {x, y} = this.glob2local(globX, globY)
+    if(x == 0 || x == ROW_HEIGHT-1 || y == 0 || y == ROW_LENGTH-1){
+      return // we don't handle corner cases
+    }
+    let cell = this.state.curArea[x][y]
+    if(cell.getCelltypeCase() != pb.Cell.CelltypeCase.BOMBS 
+      || cell.getBombs() == 9|| cell.getBombs() == 0){
+      return
+    }
+    // console.log("neighbour:" ,this.getNeighbourBombs(x, y))
+    // console.log("number:" ,getCellNumber(cell));
+    if(this.getNeighbourBombs(x, y) == getCellNumber(cell)){
+      this.flipNeighbours(globX, globY);
+    }
+  }
+
+  handleMouseUp(globX, globY, e) {
+    if(this.state.mouseDown.l && this.state.mouseDown.r){
+      this.handleSimulClick(globX, globY);
+    }
+    if(e.nativeEvent.which === 1){
+      this.state.mouseDown.l = false;
+    }
+    if(e.nativeEvent.which === 3){
+      this.state.mouseDown.r = false;
+    }
+  }
+
+  flipNeighbours(globX, globY) {
+    for(let i = -1; i < 2; i++){
+      for(let j = -1; j < 2; j++){
+        this.flipCell(globX+i, globY+j);
+      }
+    }
+  }
+
+  flipCell(globX, globY) {
     // global x and global y
+    let {x, y} = this.glob2local(globX, globY)
+    if(getCellDesc(this.state.curArea[x][y]) !== ' '){
+      return
+    }
     let msg = new pb.ClientToServer();
     let touch = new pb.TouchRequest();
     touch.setX(globX);
     touch.setY(globY);
-    if(e.type === 'click'){
-      touch.setTouchtype(pb.TouchType.FLIP);
-    } else if(e.type === 'contextmenu') {
-      e.preventDefault();
-      console.log('right click')
-      touch.setTouchtype(pb.TouchType.FLAG);
-    }
+    touch.setTouchtype(pb.TouchType.FLIP);
     msg.setTouch(touch);
     this.props.socket.send(msg.serializeBinary());
+  }
+
+  flagCell(globX, globY) {
+    // global x and global y
+    let {x, y} = this.glob2local(globX, globY)
+    if(getCellDesc(this.state.curArea[x][y]) !== ' '){
+      return
+    }
+    let msg = new pb.ClientToServer();
+    let touch = new pb.TouchRequest();
+    touch.setX(globX);
+    touch.setY(globY);
+    touch.setTouchtype(pb.TouchType.FLAG);
+    msg.setTouch(touch);
+    this.props.socket.send(msg.serializeBinary());
+  }
+
+  handleClick(globX, globY, e) {
+    // global x and global y
+    let {x, y} = this.glob2local(globX, globY)
+    if(getCellDesc(this.state.curArea[x][y]) !== ' '){
+      return
+    }
+    if(e.type === 'click'){
+      this.flipCell(globX, globY);
+    } else if(e.type === 'contextmenu') {
+      e.preventDefault();
+      this.flagCell(globX, globY);
+    }
   }
 
   render() {
@@ -257,12 +369,20 @@ class Area extends React.Component {
           y={this.state.baseXY.y+j}
           onClick={
             (event)=>{
-              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j, event)
+              event.preventDefault();
+              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j, event);
             }
           }
           onContextMenu={
             (event)=>{
-              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j, event)
+              event.preventDefault();
+              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j, event);
+            }
+          }
+          onMouseDown={this.handleMouseDown.bind(this)}
+          onMouseUp={
+            (event)=>{
+              this.handleMouseUp(this.state.baseXY.x+i, this.state.baseXY.y+j, event);
             }
           }
         />
@@ -283,6 +403,11 @@ function Cell(props) {
       className="square"
       onClick={props.onClick}
       onContextMenu={props.onContextMenu}
+      onMouseDown={props.onMouseDown}
+      onMouseUp={props.onMouseUp}
+      onDoubleClick={(e)=>{}}
+      unselectable="on"
+      // onSelectStart="return false;" 
     >
       {props.value}
     </button>
