@@ -48,7 +48,7 @@ class Aeilos extends React.Component {
 class Area extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new WebSocket('ws://localhost:8000/ws');
+    const socket = new WebSocket('wss://changgeng.me/ws/');
 
     this.state = {
       socket: socket,
