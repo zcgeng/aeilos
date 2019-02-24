@@ -1,0 +1,1 @@
+daemonize -p /var/run/aeilos.pid -l /var/lock/subsys/aeilos -u nobody ./aeilos
