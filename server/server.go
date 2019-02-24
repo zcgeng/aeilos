@@ -84,20 +84,37 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Send the newly received message to mine engine
-		s.mmap.CCommand <- &msg
+		cmd := &minemap.ServerToMMap{
+			Cmd:    &msg,
+			Client: ws,
+		}
+		s.mmap.CCommand <- cmd
 	}
 }
 
 func (s *MineServer) handleResponses() {
 	for {
 		rmsg := <-s.mmap.CReply
-		data, err := proto.Marshal(rmsg)
+		data, err := proto.Marshal(rmsg.Reply)
 		if err != nil {
 			log.Fatalf("Marshal error: %v", err)
 			return
 		}
 		// fmt.Printf("broadcasting: [%v]\n", rmsg)
-		s.bcastMsg(data)
+		if rmsg.Bcast {
+			s.bcastMsg(data)
+		} else {
+			s.sendMsg(data, rmsg.Client)
+		}
+	}
+}
+
+func (s *MineServer) sendMsg(data []byte, client *websocket.Conn) {
+	err := client.WriteMessage(websocket.BinaryMessage, data)
+	if err != nil {
+		log.Printf("error: %v", err)
+		client.Close()
+		delete(s.clients, client)
 	}
 }
 

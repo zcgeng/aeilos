@@ -46,6 +46,12 @@ message XY {
 	int64 y = 2;
 }
 
+message Zeros {
+	repeated XY coords = 1;
+	int32 score = 2;
+	string user = 3;
+}
+
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;
@@ -58,6 +64,7 @@ message ServerToClient {
 		TouchResponse touch = 1;
 		Area area = 2;
 		Cell update = 3;
-		string msg = 4;
+		Zeros updateZeros = 4;
+		string msg = 5;
 	}
 }

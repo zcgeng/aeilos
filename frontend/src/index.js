@@ -30,7 +30,8 @@ function getCellDesc(pbcell) {
 class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new WebSocket('wss://changgeng.me/ws/');
+    // const socket = new WebSocket('wss://changgeng.me/ws/');
+    const socket = new WebSocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: 0,
@@ -161,6 +162,9 @@ class Area extends React.Component {
             case pb.ServerToClient.ResponseCase.TOUCH:
               console.log("you got",response.getTouch().getScore()+" scores")
               let cell = response.getTouch().getCell();
+              if(!InsideArea(cell.getX(), cell.getY(), that.state.baseXY.x, that.state.baseXY.y)){
+                break;
+              }
               let newArea = that.state.curArea.map((arr)=>{return arr.slice();});
               let {x, y} = that.glob2local(cell.getX(), cell.getY())
               newArea[x][y] = cell;

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/gorilla/websocket"
 	pb "github.com/zcgeng/aeilos/pb"
 )
 
@@ -20,16 +21,27 @@ const (
 // MineMap ...
 type MineMap struct {
 	areas    map[string]*MineArea
-	CCommand chan *pb.ClientToServer
-	CReply   chan *pb.ServerToClient
+	CCommand chan *ServerToMMap
+	CReply   chan *MMapToServer
+}
+
+type ServerToMMap struct {
+	Cmd    *pb.ClientToServer
+	Client *websocket.Conn
+}
+
+type MMapToServer struct {
+	Reply  *pb.ServerToClient
+	Client *websocket.Conn
+	Bcast  bool
 }
 
 // NewMineMap ...
 func NewMineMap() *MineMap {
 	m := new(MineMap)
 	m.areas = make(map[string]*MineArea)
-	m.CCommand = make(chan *pb.ClientToServer, 1000)
-	m.CReply = make(chan *pb.ServerToClient, 1000)
+	m.CCommand = make(chan *ServerToMMap, 1000)
+	m.CReply = make(chan *MMapToServer, 1000)
 	m.run()
 	return m
 }
@@ -66,8 +78,8 @@ func (m *MineMap) PutBlock(x, y int, b *MineBlock) {
 	*block = *b
 }
 
-// start from a zero point, dfs all zeros and broadcast
-// reture cumulative scores: 0 for zeros, 1 for each numbered cell
+// starts from a zero point, DFS all zeros and broadcast
+// returns cumulative scores: 0 for zeros, 1 for each numbered cell
 func (m *MineMap) ExploreZeros(x, y int) int {
 	score := 0
 	b := m.GetBlock(x, y)
@@ -81,9 +93,21 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 	}
 
 	b.status = show
-	m.CReply <- &pb.ServerToClient{Response: &pb.ServerToClient_Update{
-		Update: m.getCellPB(int64(x), int64(y)),
-	}}
+	if b.value != 0 {
+		score++
+	}
+
+	reply := &MMapToServer{
+		Reply: &pb.ServerToClient{
+			Response: &pb.ServerToClient_Update{
+				Update: m.getCellPB(int64(x), int64(y)),
+			},
+		},
+		Client: nil, // TODO: use pb.UpdateZeros
+		Bcast:  true,
+	}
+	m.CReply <- reply
+
 	if b.value == 0 {
 		for i := -1; i < 2; i++ {
 			for j := -1; j < 2; j++ {
@@ -91,7 +115,7 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 			}
 		}
 	}
-	return score + 1
+	return score
 }
 
 // ShowBlock returns the score that the player got
@@ -216,7 +240,7 @@ func (m *MineMap) getCellPB(x, y int64) *pb.Cell {
 	return ret
 }
 
-func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) {
+func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) *pb.ServerToClient {
 	var score int
 	if v.Touch.GetTouchType() == pb.TouchType_FLAG {
 		score = m.putFlag(int(v.Touch.GetX()), int(v.Touch.GetY()), "")
@@ -229,10 +253,10 @@ func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) {
 		Cell:  m.getCellPB(v.Touch.GetX(), v.Touch.GetY()),
 	}}
 
-	m.CReply <- &pb.ServerToClient{Response: resp}
+	return &pb.ServerToClient{Response: resp}
 }
 
-func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) {
+func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) *pb.ServerToClient {
 	area := &pb.Area{
 		X:     v.GetArea.GetX(),
 		Y:     v.GetArea.GetY(),
@@ -245,27 +269,38 @@ func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) {
 		}
 	}
 
-	m.CReply <- &pb.ServerToClient{Response: &pb.ServerToClient_Area{Area: area}}
+	return &pb.ServerToClient{Response: &pb.ServerToClient_Area{Area: area}}
 }
 
 func (m *MineMap) operationLoop() {
 	fmt.Println("MineMap: operation loop begins")
 	for {
-		cmd := <-m.CCommand
+		msg := <-m.CCommand
+		cmd := msg.Cmd
+
+		reply := &MMapToServer{
+			Reply:  nil,
+			Client: msg.Client,
+			Bcast:  false,
+		}
 
 		switch v := cmd.GetRequest().(type) {
 
 		case *pb.ClientToServer_Touch:
 			fmt.Printf("received Touch request: %v\n", v)
-			m.handleTouchRequest(v)
+			reply.Reply = m.handleTouchRequest(v)
+			reply.Bcast = true
 
 		case *pb.ClientToServer_GetArea:
 			fmt.Printf("received GetArea request: %v\n", v)
-			m.handleGetAreaRequest(v)
+			reply.Reply = m.handleGetAreaRequest(v)
+			reply.Bcast = false
 
 		default:
 			fmt.Printf("wrong type of request: %v\n", v)
 		}
+
+		m.CReply <- reply
 
 	}
 }
