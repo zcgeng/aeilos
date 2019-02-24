@@ -12,7 +12,7 @@ message Cell {
 }
 
 message Area {
-	// 10 * 10 cells
+	// 10 * 10 cells starting from (x, y) : 0,0 1,0 2,0 ... 9,0 0,-1 1,-1...
 	int64 x = 1;
 	int64 y = 2;
 	repeated Cell cells = 3;
@@ -54,5 +54,9 @@ message ClientToServer {
 }
 
 message ServerToClient {
-	string Msg = 1;
+	oneof response {
+		TouchResponse touch = 1;
+		Area area = 2;
+		string msg = 3;
+	}
 }

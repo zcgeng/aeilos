@@ -4,47 +4,133 @@ import './index.css';
 const pb = require('./aeilos_pb');
 
 
-class WStest extends React.Component {
+function getCellDesc(pbcell) {
+  switch(pbcell.getCelltypeCase()) {
+    case pb.Cell.CelltypeCase.BOMBS:
+      if(pbcell.getBombs() === 9) return '*';
+      if(pbcell.getBombs() === 11) return '??';
+      return pbcell.getBombs();
+    case pb.Cell.CelltypeCase.UNTOUCHED:
+      return ' '
+    case pb.Cell.CelltypeCase.FLAGURL:
+      return 'P'
+    default:
+      alert('error: cell no type')
+      return ' '
+  }
+}
+
+class Aeilos extends React.Component {
   constructor(props) {
     super(props);
     const socket = new WebSocket('ws://localhost:8000/ws');
     socket.addEventListener('open', (event)=>{
       let msg = new pb.ClientToServer();
-      let touch = new pb.TouchRequest();
-      touch.setX(10);
-      touch.setY(10);
-      touch.setTouchtype(pb.TouchType.FLIP)
-      msg.setTouch(touch);
+      let xy = new pb.XY();
+      xy.setX(0);
+      xy.setY(0);
+      msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
+
+
+      let msg2 = new pb.ClientToServer();
+      let touch = new pb.TouchRequest();
+      touch.setX(8);
+      touch.setY(2);
+      touch.setTouchtype(pb.TouchType.FLIP);
+      msg2.setTouch(touch);
+      socket.send(msg2.serializeBinary());
     });
 
     var that = this;
     socket.addEventListener('message', function (event) {
       var blob = event.data;
       var fileReader     = new FileReader();
-      fileReader.onload  = function(event) {
-          let msg = pb.ServerToClient.deserializeBinary(event.target.result);
-          that.setState({
-            hello: that.state.hello + ' ' + msg.getMsg(),
-          });
+      fileReader.onload = function(event) {
+          let response = pb.ServerToClient.deserializeBinary(event.target.result);
+          switch(response.getResponseCase()){
+            case pb.ServerToClient.ResponseCase.TOUCH:
+              console.log("you got",response.getTouch().getScore()+" scores")
+              let cell = response.getTouch().getCell();
+              let newArea = that.state.curArea.map((arr)=>{return arr.slice();});
+              newArea[cell.getX()][cell.getY()] = cell;
+              that.setState({
+                curArea: newArea,
+                baseXY: that.state.baseXY,
+              })
+              break;
+            case pb.ServerToClient.ResponseCase.AREA:
+              let cellsList = response.getArea().getCellsList();
+              // reshape the cellsList[100] to [10][10]
+              let cells2d = [];
+              while(cellsList.length) 
+                cells2d.push(cellsList.splice(0,10))
+
+              that.setState({
+                curArea: cells2d,
+                baseXY: {x: response.getArea().getX(), y: response.getArea().getY()},
+              });
+              break;
+            case pb.ServerToClient.ResponseCase.MSG:
+              console.log(response.getMsg());
+              break;
+            default:
+              alert('error: response no type')
+          } 
       };
       fileReader.readAsArrayBuffer(blob);
     });
 
-
-
     this.state = {
-      hello: "hello",
+      baseXY: {x: 0, y:0},
+      curArea: [],
+    };
+  }
+
+  render() {
+    const mmap = this.state.curArea.map((row)=>{
+      return row.map((cell)=>{
+        return getCellDesc(cell);
+      });
+    });
+
+    const cellBoard = mmap.map((row, i) => {
+      const cellRow = row.map((val, j) => {
+        return <Cell key={j} value={val} x={this.state.baseXY.x+i} y={this.state.baseXY.y+j}/>
+      });
+      return  <div key={i} className="board-row">{cellRow}</div>
+    });
+    return (
+      <div>
+        {cellBoard}
+      </div>
+    );
+  }
+}
+
+class Cell extends React.Component{
+  constructor(props) {
+    super(props);
+    this.state = {
+      desc: this.props.value,
+      x: this.props.x,
+      y: this.props.y,
     };
   }
 
   render() {
     return (
-      <div>
-        {this.state.hello}
-      </div>
+      <button
+        className="square"
+        onClick={()=>{
+          console.log(this.props.x, this.props.y);
+        }}
+      >
+        {this.props.value}
+      </button>
     );
   }
+
 }
 
 
@@ -196,6 +282,6 @@ class Game extends React.Component {
 
 ReactDOM.render(
   // <Game />,
-  <WStest />,
+  <Aeilos />,
   document.getElementById('root')
 );

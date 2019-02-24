@@ -66,11 +66,11 @@ func (m *MineMap) PutBlock(x, y int, b *MineBlock) {
 	*block = *b
 }
 
-// ShowBlock ...
-func (m *MineMap) ShowBlock(x, y int) {
+// ShowBlock returns the score that the player got
+func (m *MineMap) ShowBlock(x, y int) int32 {
 	b := m.GetBlock(x, y)
 	if b.status != hidden {
-		return
+		return 0
 	}
 
 	if b.value == 11 {
@@ -84,6 +84,41 @@ func (m *MineMap) ShowBlock(x, y int) {
 				m.ShowBlock(x+i, y+j)
 			}
 		}
+	}
+	switch b.value {
+	case 0:
+		return 0
+	case 9:
+		return -1
+	case 11:
+		fmt.Println("impossible!! code:24u89kejnw9")
+		return 0
+	default:
+		return 1
+	}
+}
+
+// return the score
+func (m *MineMap) putFlag(x, y int, user string) int32 {
+	b := m.GetBlock(x, y)
+	if b.status != hidden {
+		return 0
+	}
+
+	if b.value == 11 {
+		b.value = m.calcBombs(x, y)
+	}
+
+	switch b.value {
+	case 9:
+		b.status = flag
+		b.user = user
+		return 1
+
+	default:
+		b.status = show
+		b.user = user
+		return -1
 	}
 }
 
@@ -100,32 +135,9 @@ func (m *MineMap) calcBombs(x, y int) uint8 {
 	return uint8(count)
 }
 
-// return -1: already has owner; 0 : success; 1..8 : wrong flag
-func (m *MineMap) putFlag(x, y int, user string) int {
-	b := m.GetBlock(x, y)
-	if b.status != hidden {
-		return -1
-	}
-
-	if b.value == 11 {
-		b.value = m.calcBombs(x, y)
-	}
-
-	switch b.value {
-	case 9:
-		b.status = flag
-		b.user = user
-		return 0
-
-	default:
-		b.status = show
-		b.user = user
-		return int(b.value)
-	}
-}
-
 // PrintMap ..
-func PrintMap(mapa *MineMap) {
+func PrintMap(mapa *MineMap) string {
+	s := ""
 	for i := -20; i < 20; i++ {
 		for j := -20; j < 20; j++ {
 			v := strconv.Itoa(int(mapa.GetBlock(i, j).value))
@@ -146,21 +158,90 @@ func PrintMap(mapa *MineMap) {
 				v = "P"
 			}
 
-			fmt.Print(v, " ")
+			if j == -20 {
+				s += fmt.Sprintf("%v", v)
+			} else {
+				s += fmt.Sprintf(" %v", v)
+			}
 		}
-		fmt.Print("\n")
+		if i != 19 {
+			s += fmt.Sprintf("\n")
+		}
+
 	}
+	return s
+}
+
+func (m *MineMap) getCellPB(x, y int64) *pb.Cell {
+	block := m.GetBlock(int(x), int(y))
+	ret := &pb.Cell{}
+	ret.X = x
+	ret.Y = y
+	switch block.status {
+	case hidden:
+		ret.CellType = &pb.Cell_UnTouched{UnTouched: true}
+	case show:
+		ret.CellType = &pb.Cell_Bombs{Bombs: int32(block.value)}
+	case flag:
+		ret.CellType = &pb.Cell_FlagURL{FlagURL: ""}
+	default:
+		fmt.Printf("ERROR: non existing cell type \n")
+		ret.CellType = nil
+	}
+	return ret
+}
+
+func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) {
+	var score int32
+	if v.Touch.GetTouchType() == pb.TouchType_FLAG {
+		score = m.putFlag(int(v.Touch.GetX()), int(v.Touch.GetY()), "")
+	} else if v.Touch.GetTouchType() == pb.TouchType_FLIP {
+		score = m.ShowBlock(int(v.Touch.GetX()), int(v.Touch.GetY()))
+	}
+
+	resp := &pb.ServerToClient_Touch{Touch: &pb.TouchResponse{
+		Score: score,
+		Cell:  m.getCellPB(v.Touch.GetX(), v.Touch.GetY()),
+	}}
+
+	m.CReply <- &pb.ServerToClient{Response: resp}
+}
+
+func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) {
+	area := &pb.Area{
+		X:     v.GetArea.GetX(),
+		Y:     v.GetArea.GetY(),
+		Cells: make([]*pb.Cell, 0),
+	}
+
+	for xx := int64(0); xx < 10; xx++ {
+		for yy := int64(0); yy < 10; yy++ {
+			area.Cells = append(area.Cells, m.getCellPB(xx, yy))
+		}
+	}
+
+	m.CReply <- &pb.ServerToClient{Response: &pb.ServerToClient_Area{Area: area}}
 }
 
 func (m *MineMap) operationLoop() {
-	fmt.Println("MineMap: operation loop begin")
+	fmt.Println("MineMap: operation loop begins")
 	for {
 		cmd := <-m.CCommand
-		fmt.Printf("received command: %v\n", cmd)
-		m.CReply <- &pb.ServerToClient{Msg: "hello world"}
-		for i := 0; i < 100; i++ {
-			m.CReply <- &pb.ServerToClient{Msg: "hello world " + strconv.Itoa(i)}
+
+		switch v := cmd.GetRequest().(type) {
+
+		case *pb.ClientToServer_Touch:
+			fmt.Printf("received Touch request: %v\n", v)
+			m.handleTouchRequest(v)
+
+		case *pb.ClientToServer_GetArea:
+			fmt.Printf("received GetArea request: %v\n", v)
+			m.handleGetAreaRequest(v)
+
+		default:
+			fmt.Printf("wrong type of request: %v\n", v)
 		}
+
 	}
 }
 
