@@ -35,7 +35,7 @@ func NewMineServer() *MineServer {
 // Start ..
 func (s *MineServer) Start() {
 	// Configure websocket route
-	http.HandleFunc("/ws", s.handleConnections)
+	http.HandleFunc("/ws/", s.handleConnections)
 
 	// start a file server
 	fs := http.FileServer(http.Dir("www/"))
