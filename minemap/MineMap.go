@@ -76,6 +76,10 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 		return score
 	}
 
+	if b.value == 11 {
+		b.value = m.calcBombs(x, y)
+	}
+
 	b.status = show
 	m.CReply <- &pb.ServerToClient{Response: &pb.ServerToClient_Update{
 		Update: m.getCellPB(int64(x), int64(y)),
@@ -237,7 +241,7 @@ func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) {
 
 	for xx := int64(0); xx < 10; xx++ {
 		for yy := int64(0); yy < 10; yy++ {
-			area.Cells = append(area.Cells, m.getCellPB(xx, yy))
+			area.Cells = append(area.Cells, m.getCellPB(xx+v.GetArea.GetX(), yy+v.GetArea.GetY()))
 		}
 	}
 

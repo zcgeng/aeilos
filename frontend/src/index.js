@@ -27,12 +27,37 @@ function getCellDesc(pbcell) {
 class Aeilos extends React.Component {
   constructor(props) {
     super(props);
+  }
+
+  renderArea(x, y) {
+    return 
+  }
+
+  render() {
+    return (
+      <div>
+
+      </div>
+    );
+  }
+}
+
+class Area extends React.Component {
+  constructor(props) {
+    super(props);
     const socket = new WebSocket('ws://localhost:8000/ws');
+
+    this.state = {
+      socket: socket,
+      baseXY: {x: props.x, y:props.y},
+      curArea: [],
+    };
+
     socket.addEventListener('open', (event)=>{
       let msg = new pb.ClientToServer();
       let xy = new pb.XY();
-      xy.setX(0);
-      xy.setY(0);
+      xy.setX(props.x+10);
+      xy.setY(props.y);
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
     });
@@ -44,17 +69,20 @@ class Aeilos extends React.Component {
       fileReader.onload = function(event) {
           let response = pb.ServerToClient.deserializeBinary(event.target.result);
           switch(response.getResponseCase()){
+
             case pb.ServerToClient.ResponseCase.TOUCH:
               console.log("you got",response.getTouch().getScore()+" scores")
               let cell = response.getTouch().getCell();
               let newArea = that.state.curArea.map((arr)=>{return arr.slice();});
-              newArea[cell.getX()][cell.getY()] = cell;
+              let {x, y} = that.glob2local(cell.getX(), cell.getY())
+              newArea[x][y] = cell;
               that.setState({
                 curArea: newArea,
                 baseXY: that.state.baseXY,
                 socket: that.state.socket,
               })
               break;
+
             case pb.ServerToClient.ResponseCase.AREA:
               let cellsList = response.getArea().getCellsList();
               // reshape the cellsList[100] to [10][10]
@@ -68,17 +96,21 @@ class Aeilos extends React.Component {
                 socket: that.state.socket,
               });
               break;
+
             case pb.ServerToClient.ResponseCase.MSG:
               console.log(response.getMsg());
               break;
+
             case pb.ServerToClient.ResponseCase.UPDATE:
               let cell1 = response.getUpdate();
-              console.log("auto explore zeros, ",cell1.getX(), cell1.getY())
               if(!InsideArea(cell1.getX(), cell1.getY(), that.state.baseXY.x, that.state.baseXY.y)){
                 break;
               }
+              
               let newArea1 = that.state.curArea.map((arr)=>{return arr.slice();});
-              newArea1[cell1.getX()][cell1.getY()] = cell1;
+              let xy1 = that.glob2local(cell1.getX(), cell1.getY());
+              newArea1[xy1.x][xy1.y] = cell1;
+
               that.setState({
                 curArea: newArea1,
                 baseXY: that.state.baseXY,
@@ -92,11 +124,10 @@ class Aeilos extends React.Component {
       fileReader.readAsArrayBuffer(blob);
     });
 
-    this.state = {
-      socket: socket,
-      baseXY: {x: 0, y:0},
-      curArea: [],
-    };
+  }
+
+  glob2local(x, y) {
+    return {x: x - this.state.baseXY.x, y: y - this.state.baseXY.y};
   }
 
   handleClick(globX, globY) {
@@ -301,6 +332,6 @@ class Game extends React.Component {
 
 ReactDOM.render(
   // <Game />,
-  <Aeilos />,
+  <Area x={10} y={5} />,
   document.getElementById('root')
 );
