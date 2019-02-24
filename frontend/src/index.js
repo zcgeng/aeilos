@@ -30,16 +30,102 @@ function getCellDesc(pbcell) {
 class Aeilos extends React.Component {
   constructor(props) {
     super(props);
+    const socket = new WebSocket('wss://changgeng.me/ws/');
+    this.state = {
+      socket: socket,
+      x: 0,
+      y: 0,
+    };
   }
 
   renderArea(x, y) {
-    return (<Area x={x} y={y} />)
+    return (<Area x={x} y={y} socket={this.state.socket}/>)
+  }
+
+  handleMoveMap(direction) {
+    // up down left right none
+    let xmoves = [-3, 3, 0, 0]
+    let ymoves = [0, 0, -3, 3]
+    let msg = new pb.ClientToServer();
+    let xy = new pb.XY();
+    xy.setX(this.state.x + xmoves[direction]);
+    xy.setY(this.state.y + ymoves[direction]);
+    msg.setGetarea(xy);
+    this.state.socket.send(msg.serializeBinary());
+    this.setState({
+      socket: this.state.socket,
+      x: this.state.x + xmoves[direction],
+      y: this.state.y + ymoves[direction],
+    });
+  }
+
+  handleCoordX(event) {
+    let msg = new pb.ClientToServer();
+    let xy = new pb.XY();
+    xy.setX(parseInt(event.target.value, 10));
+    xy.setY(this.state.y);
+    msg.setGetarea(xy);
+    this.state.socket.send(msg.serializeBinary());
+    this.setState({
+      socket: this.state.socket,
+      x: parseInt(event.target.value, 10),
+      y: this.state.y,
+    });
+  }
+
+  handleCoordY(event) {
+    let msg = new pb.ClientToServer();
+    let xy = new pb.XY();
+    xy.setX(this.state.x);
+    xy.setY(parseInt(event.target.value, 10));
+    msg.setGetarea(xy);
+    this.state.socket.send(msg.serializeBinary());
+    this.setState({
+      socket: this.state.socket,
+      x: this.state.x,
+      y: parseInt(event.target.value, 10),
+    });
   }
 
   render() {
     return (
       <div>
-        {this.renderArea(0, 0)}
+      <div>
+        {this.renderArea(this.state.x, this.state.y)}
+      </div>
+
+      <div>
+        <button onClick={()=>{
+          this.handleMoveMap(0);
+        }}>
+          Go UP
+        </button>
+        <button onClick={()=>{
+          this.handleMoveMap(1);
+        }}>
+          Go DOWN
+        </button>
+        <button onClick={()=>{
+          this.handleMoveMap(2);
+        }}>
+          Go LEFT
+        </button>
+        <button onClick={()=>{
+          this.handleMoveMap(3);
+        }}>
+          Go RIGHT
+        </button>
+      </div>
+
+      <div>
+        Current location: ({this.state.x}, {this.state.y})
+      </div>
+
+      <div>
+        Jump to coordinate:
+        <input type="number" value={this.state.x} onChange={this.handleCoordX.bind(this)} />
+        <input type="number" value={this.state.y} onChange={this.handleCoordY.bind(this)} />
+      </div>
       </div>
     );
   }
@@ -48,13 +134,12 @@ class Aeilos extends React.Component {
 class Area extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new WebSocket('wss://changgeng.me/ws/');
 
     this.state = {
-      socket: socket,
       baseXY: {x: props.x, y:props.y},
       curArea: [],
     };
+    const socket = props.socket;
 
     socket.addEventListener('open', (event)=>{
       let msg = new pb.ClientToServer();
@@ -82,7 +167,6 @@ class Area extends React.Component {
               that.setState({
                 curArea: newArea,
                 baseXY: that.state.baseXY,
-                socket: that.state.socket,
               })
               break;
 
@@ -96,7 +180,6 @@ class Area extends React.Component {
               that.setState({
                 curArea: cells2d,
                 baseXY: {x: response.getArea().getX(), y: response.getArea().getY()},
-                socket: that.state.socket,
               });
               break;
 
@@ -137,15 +220,21 @@ class Area extends React.Component {
     return {x: x - this.state.baseXY.x, y: y - this.state.baseXY.y};
   }
 
-  handleClick(globX, globY) {
+  handleClick(globX, globY, e) {
     // global x and global y
     let msg = new pb.ClientToServer();
     let touch = new pb.TouchRequest();
     touch.setX(globX);
     touch.setY(globY);
-    touch.setTouchtype(pb.TouchType.FLIP);
+    if(e.type === 'click'){
+      touch.setTouchtype(pb.TouchType.FLIP);
+    } else if(e.type === 'contextmenu') {
+      e.preventDefault();
+      console.log('right click')
+      touch.setTouchtype(pb.TouchType.FLAG);
+    }
     msg.setTouch(touch);
-    this.state.socket.send(msg.serializeBinary());
+    this.props.socket.send(msg.serializeBinary());
   }
 
   render() {
@@ -163,8 +252,13 @@ class Area extends React.Component {
           x={this.state.baseXY.x+i} 
           y={this.state.baseXY.y+j}
           onClick={
-            ()=>{
-              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j)
+            (event)=>{
+              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j, event)
+            }
+          }
+          onContextMenu={
+            (event)=>{
+              this.handleClick(this.state.baseXY.x+i, this.state.baseXY.y+j, event)
             }
           }
         />
@@ -184,155 +278,11 @@ function Cell(props) {
     <button
       className="square"
       onClick={props.onClick}
+      onContextMenu={props.onContextMenu}
     >
       {props.value}
     </button>
   );
-}
-
-
-function Square(props) {
-  return (
-    <button
-      className="square"
-      onClick={
-        props.onClick
-      }
-    >
-      {props.value}
-    </button>
-  );
-}
-
-class Board extends React.Component {
-  renderSquare(i) {
-    return <Square 
-      value={this.props.squares[i]}
-      onClick={()=>{this.props.onClick(i)}}
-    />;
-  }
-
-  render() {
-    return (
-      <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
-      </div>
-    );
-  }
-}
-
-function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  for (var i = lines.length - 1; i >= 0; i--) {
-    const [a, b, c] = lines[i];
-    if(squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
-    }
-  }
-  return null;
-}
-
-class Game extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      history: [{
-        squares: Array(9).fill(null),
-      }],
-      xIsNext: true,
-      stepNumber: 0,
-    };
-  }
-
-  handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return;
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
-    this.setState({
-        history: history.concat([{
-        squares: squares,
-      }]),
-      xIsNext: !this.state.xIsNext,
-      stepNumber: history.length,
-    })
-  }
-
-  jumpTo(step) {
-    this.setState({
-      stepNumber: step,
-      xIsNext: (step % 2) === 0,
-    });
-  }
-
-  render() {
-    const history = this.state.history;
-    const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
-
-    const moves = history.map((step, move) => {
-      const desc = move ?
-        'Go to move #' + move :
-        'Go to game start';
-      return (
-        <li key={move}>
-          <button
-            onClick={() => this.jumpTo(move)}
-          >
-            {desc}
-          </button>
-        </li>
-      );
-    })
-
-    let status;
-    if (winner) {
-      status = 'Player ' + winner + ' won';
-    } else {
-      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-    }
-
-    return (
-      <div className="game">
-        <div className="game-board">
-          <Board
-            squares={current.squares}
-            onClick={(i) => {this.handleClick(i)}}
-          />
-        </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
-        </div>
-      </div>
-    );
-  }
 }
 
 // ========================================

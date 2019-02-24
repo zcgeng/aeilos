@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	bombRate = 15
+	bombRate = 20
 )
 
 //
@@ -138,7 +138,7 @@ func (m *MineMap) putFlag(x, y int, user string) int {
 	case 9:
 		b.status = flag
 		b.user = user
-		return 1
+		return 10
 
 	default:
 		b.status = show
