@@ -14,13 +14,13 @@ function getCellDesc(pbcell) {
   switch(pbcell.getCelltypeCase()) {
     case pb.Cell.CelltypeCase.BOMBS:
       if(pbcell.getBombs() === 0) return '0';
-      if(pbcell.getBombs() === 9) return '*';
+      if(pbcell.getBombs() === 9) return '💣';
       if(pbcell.getBombs() === 11) return '??';
       return pbcell.getBombs();
     case pb.Cell.CelltypeCase.UNTOUCHED:
       return ' '
     case pb.Cell.CelltypeCase.FLAGURL:
-      return 'P'
+      return '🚩'
     default:
       alert('error: cell no type')
       return ' '
@@ -64,6 +64,42 @@ class Aeilos extends React.Component {
 
   renderArea(x, y) {
     return (<Area x={x} y={y} socket={this.state.socket}/>)
+  }
+
+  handleWheel(e) {
+    let xMove = 0;
+    let yMove = 0;
+    if(e.deltaY < 10 && e.deltaY > 0) {
+      xMove = 1;
+    }
+    else if(e.deltaY < 0 && e.deltaY > -10) {
+      xMove = -1;
+    }
+    else {
+      xMove = Math.round(e.deltaY/100)
+    }
+
+    if(e.deltaX < 50 && e.deltaX > 0) {
+      yMove = 1;
+    }
+    else if(e.deltaX < 0 && e.deltaX > -50) {
+      yMove = -1;
+    }
+    else {
+      yMove = Math.round(e.deltaX/80)
+    }
+
+    let msg = new pb.ClientToServer();
+    let xy = new pb.XY();
+    xy.setX(this.state.x + xMove);
+    xy.setY(this.state.y + yMove);
+    msg.setGetarea(xy);
+    this.state.socket.send(msg.serializeBinary());
+    this.setState({
+      socket: this.state.socket,
+      x: this.state.x + xMove,
+      y: this.state.y + yMove,
+    });
   }
 
   handleMoveMap(direction) {
@@ -113,7 +149,7 @@ class Aeilos extends React.Component {
 
   render() {
     return (
-      <div>
+      <div onWheel={(e)=>{this.handleWheel(e)}}>
       <div>
         {this.renderArea(this.state.x, this.state.y)}
       </div>
@@ -150,6 +186,7 @@ class Aeilos extends React.Component {
         <input type="number" value={this.state.x} onChange={this.handleCoordX.bind(this)} />
         <input type="number" value={this.state.y} onChange={this.handleCoordY.bind(this)} />
       </div>
+      <div>You can also use [scroll wheel] or [shift]+[scroll wheel] to move</div>
       </div>
     );
   }
@@ -274,17 +311,17 @@ class Area extends React.Component {
 
   handleSimulClick(globX, globY) {
     let {x, y} = this.glob2local(globX, globY)
-    if(x == 0 || x == ROW_HEIGHT-1 || y == 0 || y == ROW_LENGTH-1){
+    if(x === 0 || x === ROW_HEIGHT-1 || y === 0 || y === ROW_LENGTH-1){
       return // we don't handle corner cases
     }
     let cell = this.state.curArea[x][y]
-    if(cell.getCelltypeCase() != pb.Cell.CelltypeCase.BOMBS 
-      || cell.getBombs() == 9|| cell.getBombs() == 0){
+    if(cell.getCelltypeCase() !== pb.Cell.CelltypeCase.BOMBS 
+      || cell.getBombs() === 9|| cell.getBombs() === 0){
       return
     }
     // console.log("neighbour:" ,this.getNeighbourBombs(x, y))
     // console.log("number:" ,getCellNumber(cell));
-    if(this.getNeighbourBombs(x, y) == getCellNumber(cell)){
+    if(this.getNeighbourBombs(x, y) === getCellNumber(cell)){
       this.flipNeighbours(globX, globY);
     }
   }
@@ -387,7 +424,7 @@ class Area extends React.Component {
           }
         />
       });
-      return  <div key={i} className="board-row">{cellRow}</div>
+      return (<div key={i} className="board-row">{cellRow}</div>);
     });
     return (
       <div>

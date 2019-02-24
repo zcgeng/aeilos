@@ -2,9 +2,6 @@
 
 ## Tasks
 
-- Left+right click
-- Persist data
-- Load data
 - User register/login
 - Score board
 - DIY flag

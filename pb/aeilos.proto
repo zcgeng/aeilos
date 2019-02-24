@@ -27,6 +27,7 @@ message TouchRequest {
 	int64 x = 1;
 	int64 y = 2;
 	TouchType touchType = 3;
+	string user = 4;
 }
 
 enum TouchResultType {
