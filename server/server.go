@@ -22,7 +22,6 @@ type MineServer struct {
 func NewMineServer() *MineServer {
 	ms := new(MineServer)
 	ms.mmap = minemap.NewMineMap()
-	ms.mmap.ShowBlock(2, 8)
 	ms.clients = make(map[*websocket.Conn]bool)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

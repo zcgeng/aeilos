@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 import './index.css';
 const pb = require('./aeilos_pb');
 
+function InsideArea(x, y, ax, ay) {
+  return (x >= ax) && (y >= ay) && (x < ax+10) && (y < ay+10);
+}
 
 function getCellDesc(pbcell) {
   switch(pbcell.getCelltypeCase()) {
@@ -67,6 +70,20 @@ class Aeilos extends React.Component {
               break;
             case pb.ServerToClient.ResponseCase.MSG:
               console.log(response.getMsg());
+              break;
+            case pb.ServerToClient.ResponseCase.UPDATE:
+              let cell1 = response.getUpdate();
+              console.log("auto explore zeros, ",cell1.getX(), cell1.getY())
+              if(!InsideArea(cell1.getX(), cell1.getY(), that.state.baseXY.x, that.state.baseXY.y)){
+                break;
+              }
+              let newArea1 = that.state.curArea.map((arr)=>{return arr.slice();});
+              newArea1[cell1.getX()][cell1.getY()] = cell1;
+              that.setState({
+                curArea: newArea1,
+                baseXY: that.state.baseXY,
+                socket: that.state.socket,
+              })
               break;
             default:
               alert('error: response no type')

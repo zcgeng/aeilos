@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	bombRate = 20
+	bombRate = 15
 )
 
 //
@@ -66,8 +66,32 @@ func (m *MineMap) PutBlock(x, y int, b *MineBlock) {
 	*block = *b
 }
 
+// start from a zero point, dfs all zeros and broadcast
+// reture cumulative scores: 0 for zeros, 1 for each numbered cell
+func (m *MineMap) ExploreZeros(x, y int) int {
+	score := 0
+	b := m.GetBlock(x, y)
+
+	if b.status != hidden {
+		return score
+	}
+
+	b.status = show
+	m.CReply <- &pb.ServerToClient{Response: &pb.ServerToClient_Update{
+		Update: m.getCellPB(int64(x), int64(y)),
+	}}
+	if b.value == 0 {
+		for i := -1; i < 2; i++ {
+			for j := -1; j < 2; j++ {
+				score += m.ExploreZeros(x+i, y+j)
+			}
+		}
+	}
+	return score + 1
+}
+
 // ShowBlock returns the score that the player got
-func (m *MineMap) ShowBlock(x, y int) int32 {
+func (m *MineMap) ShowBlock(x, y int) int {
 	b := m.GetBlock(x, y)
 	if b.status != hidden {
 		return 0
@@ -77,29 +101,26 @@ func (m *MineMap) ShowBlock(x, y int) int32 {
 		b.value = m.calcBombs(x, y)
 	}
 
-	b.status = show
+	score := 0
 	if b.value == 0 {
-		for i := -1; i < 2; i++ {
-			for j := -1; j < 2; j++ {
-				m.ShowBlock(x+i, y+j)
-			}
-		}
+		score += m.ExploreZeros(x, y)
 	}
+	b.status = show
 	switch b.value {
 	case 0:
-		return 0
+		return score
 	case 9:
-		return -1
+		return -50
 	case 11:
 		fmt.Println("impossible!! code:24u89kejnw9")
 		return 0
 	default:
-		return 1
+		return score + 1
 	}
 }
 
 // return the score
-func (m *MineMap) putFlag(x, y int, user string) int32 {
+func (m *MineMap) putFlag(x, y int, user string) int {
 	b := m.GetBlock(x, y)
 	if b.status != hidden {
 		return 0
@@ -192,7 +213,7 @@ func (m *MineMap) getCellPB(x, y int64) *pb.Cell {
 }
 
 func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) {
-	var score int32
+	var score int
 	if v.Touch.GetTouchType() == pb.TouchType_FLAG {
 		score = m.putFlag(int(v.Touch.GetX()), int(v.Touch.GetY()), "")
 	} else if v.Touch.GetTouchType() == pb.TouchType_FLIP {
@@ -200,7 +221,7 @@ func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) {
 	}
 
 	resp := &pb.ServerToClient_Touch{Touch: &pb.TouchResponse{
-		Score: score,
+		Score: int32(score),
 		Cell:  m.getCellPB(v.Touch.GetX(), v.Touch.GetY()),
 	}}
 

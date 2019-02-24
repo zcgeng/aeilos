@@ -57,6 +57,7 @@ message ServerToClient {
 	oneof response {
 		TouchResponse touch = 1;
 		Area area = 2;
-		string msg = 3;
+		Cell update = 3;
+		string msg = 4;
 	}
 }
