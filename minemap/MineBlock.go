@@ -2,9 +2,9 @@ package minemap
 
 // MineBlock ...
 type MineBlock struct {
-	value  uint8 // 9 as a bumb, 11 as unknown(border condition)
-	status uint8
-	user   string
+	Value  uint8 // 9 as a bumb, 11 as unknown(border condition)
+	Status uint8
+	User   string
 }
 
 // status

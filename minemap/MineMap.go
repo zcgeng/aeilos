@@ -23,6 +23,8 @@ type MineMap struct {
 	areas    map[string]*MineArea
 	CCommand chan *ServerToMMap
 	CReply   chan *MMapToServer
+
+	persister *Persister
 }
 
 type ServerToMMap struct {
@@ -37,36 +39,69 @@ type MMapToServer struct {
 }
 
 // NewMineMap ...
-func NewMineMap() *MineMap {
+func NewMineMap(persis *Persister) *MineMap {
 	m := new(MineMap)
 	m.areas = make(map[string]*MineArea)
 	m.CCommand = make(chan *ServerToMMap, 1000)
 	m.CReply = make(chan *MMapToServer, 1000)
+	m.persister = persis
+
 	m.run()
 	return m
 }
 
 // GetArea ...
 func (m *MineMap) GetArea(ax, ay int) *MineArea {
-	res, ok := m.areas[strconv.Itoa(ax)+","+strconv.Itoa(ay)]
+	res, ok := m.areas[GetKey(ax, ay)]
 	if !ok {
-		area := newMineArea(ax, ay)
-		area.shuffleArea(bombRate)
-		m.PutArea(area)
+		fmt.Printf("load area (%v,%v)\n", ax, ay)
+		area := m.persister.LoadArea(GetKey(ax, ay))
+		if area == nil {
+			fmt.Printf("new area (%v,%v)\n", ax, ay)
+			area = newMineArea(ax, ay)
+			area.shuffleArea(bombRate)
+		}
+		m.putArea(area)
 		return area
 	}
 	return res
 }
 
 // PutArea ...
-func (m *MineMap) PutArea(area *MineArea) {
-	m.areas[strconv.Itoa(area.x)+","+strconv.Itoa(area.y)] = area
+func (m *MineMap) putArea(area *MineArea) {
+	m.areas[GetKey(area.X, area.Y)] = area
+}
+
+// persist the cache entry (and remove it from memory)
+func (m *MineMap) AreaEntryWriteBack(key string, keepInCache bool) {
+	res, ok := m.areas[key]
+	if !ok {
+		return
+	}
+	m.persister.PersistArea(res)
+	if !keepInCache {
+		delete(m.areas, key)
+	}
+}
+
+func (m *MineMap) PersistAreaCache(keeyInCache bool) {
+	fmt.Println("persist cache")
+	for _, area := range m.areas {
+		m.persister.PersistArea(area)
+	}
+	// clear the cache
+	if !keeyInCache {
+		m.areas = make(map[string]*MineArea)
+	}
 }
 
 // GetBlock ...
 func (m *MineMap) GetBlock(x, y int) *MineBlock {
 	ax, ay := block2area(x, y)
 	area := m.GetArea(ax, ay)
+	if area.X != ax || area.Y != ay {
+		panic("got wrong area")
+	}
 	res := area.GetBlock(x, y)
 	return res
 }
@@ -84,16 +119,16 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 	score := 0
 	b := m.GetBlock(x, y)
 
-	if b.status != hidden {
+	if b.Status != hidden {
 		return score
 	}
 
-	if b.value == 11 {
-		b.value = m.calcBombs(x, y)
+	if b.Value == 11 {
+		b.Value = m.calcBombs(x, y)
 	}
 
-	b.status = show
-	if b.value != 0 {
+	b.Status = show
+	if b.Value != 0 {
 		score++
 	}
 
@@ -108,7 +143,7 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 	}
 	m.CReply <- reply
 
-	if b.value == 0 {
+	if b.Value == 0 {
 		for i := -1; i < 2; i++ {
 			for j := -1; j < 2; j++ {
 				score += m.ExploreZeros(x+i, y+j)
@@ -121,20 +156,20 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 // ShowBlock returns the score that the player got
 func (m *MineMap) ShowBlock(x, y int) int {
 	b := m.GetBlock(x, y)
-	if b.status != hidden {
+	if b.Status != hidden {
 		return 0
 	}
 
-	if b.value == 11 {
-		b.value = m.calcBombs(x, y)
+	if b.Value == 11 {
+		b.Value = m.calcBombs(x, y)
 	}
 
 	score := 0
-	if b.value == 0 {
+	if b.Value == 0 {
 		score += m.ExploreZeros(x, y)
 	}
-	b.status = show
-	switch b.value {
+	b.Status = show
+	switch b.Value {
 	case 0:
 		return score
 	case 9:
@@ -150,23 +185,23 @@ func (m *MineMap) ShowBlock(x, y int) int {
 // return the score
 func (m *MineMap) putFlag(x, y int, user string) int {
 	b := m.GetBlock(x, y)
-	if b.status != hidden {
+	if b.Status != hidden {
 		return 0
 	}
 
-	if b.value == 11 {
-		b.value = m.calcBombs(x, y)
+	if b.Value == 11 {
+		b.Value = m.calcBombs(x, y)
 	}
 
-	switch b.value {
+	switch b.Value {
 	case 9:
-		b.status = flag
-		b.user = user
+		b.Status = flag
+		b.User = user
 		return 10
 
 	default:
-		b.status = show
-		b.user = user
+		b.Status = show
+		b.User = user
 		return -1
 	}
 }
@@ -176,7 +211,7 @@ func (m *MineMap) calcBombs(x, y int) uint8 {
 	count := uint8(0)
 	for i := -1; i < 2; i++ {
 		for j := -1; j < 2; j++ {
-			if m.GetBlock(x+j, y+i).value == 9 {
+			if m.GetBlock(x+j, y+i).Value == 9 {
 				count++
 			}
 		}
@@ -189,8 +224,8 @@ func PrintMap(mapa *MineMap) string {
 	s := ""
 	for i := -20; i < 20; i++ {
 		for j := -20; j < 20; j++ {
-			v := strconv.Itoa(int(mapa.GetBlock(i, j).value))
-			status := mapa.GetBlock(i, j).status
+			v := strconv.Itoa(int(mapa.GetBlock(i, j).Value))
+			status := mapa.GetBlock(i, j).Status
 			switch status {
 			case hidden:
 				v = "+"
@@ -226,11 +261,11 @@ func (m *MineMap) getCellPB(x, y int64) *pb.Cell {
 	ret := &pb.Cell{}
 	ret.X = x
 	ret.Y = y
-	switch block.status {
+	switch block.Status {
 	case hidden:
 		ret.CellType = &pb.Cell_UnTouched{UnTouched: true}
 	case show:
-		ret.CellType = &pb.Cell_Bombs{Bombs: int32(block.value)}
+		ret.CellType = &pb.Cell_Bombs{Bombs: int32(block.Value)}
 	case flag:
 		ret.CellType = &pb.Cell_FlagURL{FlagURL: ""}
 	default:
@@ -275,33 +310,36 @@ func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) *pb.ServerT
 func (m *MineMap) operationLoop() {
 	fmt.Println("MineMap: operation loop begins")
 	for {
-		msg := <-m.CCommand
-		cmd := msg.Cmd
+		select {
+		case msg := <-m.CCommand:
+			cmd := msg.Cmd
 
-		reply := &MMapToServer{
-			Reply:  nil,
-			Client: msg.Client,
-			Bcast:  false,
+			reply := &MMapToServer{
+				Reply:  nil,
+				Client: msg.Client,
+				Bcast:  false,
+			}
+
+			switch v := cmd.GetRequest().(type) {
+
+			case *pb.ClientToServer_Touch:
+				fmt.Printf("received Touch request: %v\n", v)
+				reply.Reply = m.handleTouchRequest(v)
+				reply.Bcast = true
+
+			case *pb.ClientToServer_GetArea:
+				fmt.Printf("received GetArea request: %v\n", v)
+				reply.Reply = m.handleGetAreaRequest(v)
+				reply.Bcast = false
+
+			default:
+				fmt.Printf("wrong type of request: %v\n", v)
+			}
+			m.CReply <- reply
+
+		case <-m.persister.pTicker.C:
+			m.PersistAreaCache(false)
 		}
-
-		switch v := cmd.GetRequest().(type) {
-
-		case *pb.ClientToServer_Touch:
-			fmt.Printf("received Touch request: %v\n", v)
-			reply.Reply = m.handleTouchRequest(v)
-			reply.Bcast = true
-
-		case *pb.ClientToServer_GetArea:
-			fmt.Printf("received GetArea request: %v\n", v)
-			reply.Reply = m.handleGetAreaRequest(v)
-			reply.Bcast = false
-
-		default:
-			fmt.Printf("wrong type of request: %v\n", v)
-		}
-
-		m.CReply <- reply
-
 	}
 }
 

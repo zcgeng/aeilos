@@ -1,19 +1,30 @@
 # aeilos -- an online multi player mineswipper!
 
-# How to Build
+## Tasks
 
-## Build protobuf
+- Left+right click
+- Persist data
+- Load data
+- User register/login
+- Score board
+- DIY flag
+- Frontend beautify
+- Refine updateZeros
+
+## How to Build
+
+### Build protobuf
 First install protobuf compiler from google. Then generate the grpc source code.
 ```sh
 $ cd pb; ./generate.sh;
 ```
 
-## Build frontend
+### Build frontend
 ```sh
 $ cd frontend; npm run build;
 ```
 
-## Build backend
+### Build backend
 ```sh
 # under root directory of this project
 $ go biuld

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
@@ -21,7 +22,8 @@ type MineServer struct {
 // NewMineServer ...
 func NewMineServer() *MineServer {
 	ms := new(MineServer)
-	ms.mmap = minemap.NewMineMap()
+	persis := minemap.NewPersister(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
+	ms.mmap = minemap.NewMineMap(persis)
 	ms.clients = make(map[*websocket.Conn]bool)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
