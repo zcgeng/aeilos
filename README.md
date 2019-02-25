@@ -2,15 +2,17 @@
 
 ## Tasks
 
-- Front
-	- MiniMap
-	- DIY flag
-	- Frontend beautify
-- Back
-	- Refine updateZeros
-- All
+- Feature
 	- User register/login
 	- Score board
+	- DIY flag
+- Front
+	- Frontend beautify
+	- MiniMap
+- Back
+	- Refine updateZeros
+	- Record user current area
+	- Stop global broadcasting
 
 
 

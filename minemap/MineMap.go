@@ -85,7 +85,7 @@ func (m *MineMap) AreaEntryWriteBack(key string, keepInCache bool) {
 }
 
 func (m *MineMap) PersistAreaCache(keeyInCache bool) {
-	fmt.Println("persist cache")
+	fmt.Printf("persist cache: currently have %v areas in memory\n", len(m.areas))
 	for _, area := range m.areas {
 		m.persister.PersistArea(area)
 	}
@@ -338,7 +338,7 @@ func (m *MineMap) operationLoop() {
 			m.CReply <- reply
 
 		case <-m.persister.pTicker.C:
-			m.PersistAreaCache(false)
+			m.PersistAreaCache(true)
 		}
 	}
 }

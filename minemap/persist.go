@@ -11,7 +11,7 @@ import (
 // https://github.com/nitishm/rejson-struct
 
 const (
-	ClearCacheTimeSeconds = 60
+	ClearCacheTimeSeconds = 600
 )
 
 type Persister struct {
