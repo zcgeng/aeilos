@@ -2,11 +2,18 @@
 
 ## Tasks
 
-- User register/login
-- Score board
-- DIY flag
-- Frontend beautify
-- Refine updateZeros
+- Front
+	- MiniMap
+	- DIY flag
+	- Frontend beautify
+- Back
+	- Refine updateZeros
+- All
+	- User register/login
+	- Score board
+
+
+
 
 ## How to Build
 
@@ -24,7 +31,7 @@ $ cd frontend; npm run build;
 ### Build backend
 ```sh
 # under root directory of this project
-$ go biuld
+$ go build
 # start the service
 $ ./aeilos
 ```

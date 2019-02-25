@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import ReconnectingWebsocket from 'reconnecting-websocket';
 import './index.css';
 const pb = require('./aeilos_pb');
 
@@ -53,8 +54,8 @@ function getCellNumber(pbcell) {
 class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new WebSocket('wss://changgeng.me/ws/');
-    // const socket = new WebSocket('ws://localhost:8000/ws/');
+    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: 0,
