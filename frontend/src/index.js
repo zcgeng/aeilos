@@ -203,17 +203,16 @@ class Area extends React.Component {
       curArea: [],
     };
     const socket = props.socket;
-
+    var that = this;
     socket.addEventListener('open', (event)=>{
       let msg = new pb.ClientToServer();
       let xy = new pb.XY();
-      xy.setX(props.x);
-      xy.setY(props.y);
+      xy.setX(that.state.baseXY.x);
+      xy.setY(that.state.baseXY.y);
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
     });
 
-    var that = this;
     socket.addEventListener('message', function (event) {
       var blob = event.data;
       var fileReader     = new FileReader();
