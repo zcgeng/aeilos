@@ -150,7 +150,7 @@ class Aeilos extends React.Component {
 
   render() {
     return (
-      <div onWheel={(e)=>{this.handleWheel(e)}}>
+      <div className="area" onWheel={(e)=>{e.preventDefault();this.handleWheel(e);}}>
       <div>
         {this.renderArea(this.state.x, this.state.y)}
       </div>
