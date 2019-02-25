@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
@@ -14,16 +16,17 @@ import (
 
 // MineServer ...
 type MineServer struct {
-	mmap     *minemap.MineMap
-	clients  map[*websocket.Conn]bool
-	upgrader websocket.Upgrader
+	mmap      *minemap.MineMap
+	clients   map[*websocket.Conn]bool
+	upgrader  websocket.Upgrader
+	persister *minemap.Persister
 }
 
 // NewMineServer ...
 func NewMineServer() *MineServer {
 	ms := new(MineServer)
-	persis := minemap.NewPersister(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
-	ms.mmap = minemap.NewMineMap(persis)
+	ms.persister = minemap.NewPersister(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
+	ms.mmap = minemap.NewMineMap(ms.persister)
 	ms.clients = make(map[*websocket.Conn]bool)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -63,10 +66,13 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	// Make sure we close the connection when the function returns
 	defer ws.Close()
-	fmt.Printf("on connection\n")
+	record := "{login: " + time.Now().Local().String() + "}"
+	fmt.Printf("on connection: %v %v\n", strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
 	// Register our new client
 	s.clients[ws] = true
+
+	s.persister.RecordByIP(strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
 	for {
 		var msg pb.ClientToServer // Read in a new message as pb and map it to a Message object

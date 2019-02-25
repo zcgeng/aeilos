@@ -51,17 +51,28 @@ ol, ul {
   width: 1200px;
   height: 600px;
   display: inline-block;
+  float: left;
+}
+
+.controlplane {
+  float: left;
+}
+
+.scoreboard {
+  font-size: 100px;
+  text-align: center;
+  display: inline-block;
+  background: #ddd;
+}
+
+.navbuttons {
+  display: block;
 }
 
 .kbd-navigation .square:focus {
   background: #ddd;
 }
 
-.game {
-  display: flex;
-  flex-direction: row;
-}
-
-.game-info {
-  margin-left: 20px;
+.aeilos {
+  display: block;
 }

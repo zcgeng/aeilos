@@ -57,6 +57,35 @@ func (p *Persister) LoadArea(key string) *MineArea {
 	return area
 }
 
+func (p *Persister) GetScore(user string) string {
+	return p.get("[score]" + user)
+}
+
+func (p *Persister) AddScore(user string, score int) {
+	p.incrby("[score]"+user, score)
+}
+
+func (p *Persister) RecordByIP(ip string, value string) {
+	p.lpush("[ip]"+ip, value)
+}
+
+// -------------------- method abstractions ----------------
+
+func (p *Persister) incrby(key string, value int) {
+	// fmt.Printf("incrby %v %v\n", key, value)
+	_, err := p.conn.Do("INCRBY", key, value)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (p *Persister) lpush(key, value string) {
+	_, err := p.conn.Do("LPUSH", key, value)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (p *Persister) set(key, value string) {
 	_, err := p.conn.Do("SET", key, value)
 	if err != nil {

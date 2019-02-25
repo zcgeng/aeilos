@@ -3,6 +3,7 @@ package minemap
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	pb "github.com/zcgeng/aeilos/pb"
@@ -326,6 +327,7 @@ func (m *MineMap) operationLoop() {
 				fmt.Printf("received Touch request: %v\n", v)
 				reply.Reply = m.handleTouchRequest(v)
 				reply.Bcast = true
+				m.persister.AddScore(strings.Split(msg.Client.RemoteAddr().String(), ":")[0], int(reply.Reply.GetTouch().GetScore()))
 
 			case *pb.ClientToServer_GetArea:
 				fmt.Printf("received GetArea request: %v\n", v)
