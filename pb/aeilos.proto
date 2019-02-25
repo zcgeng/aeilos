@@ -53,6 +53,10 @@ message Zeros {
 	string user = 3;
 }
 
+message GetStats {
+	
+}
+
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;

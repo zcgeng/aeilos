@@ -6,6 +6,7 @@
 	- User register/login
 	- Score board
 	- DIY flag
+	- Own an area
 - Front
 	- Frontend beautify
 	- MiniMap

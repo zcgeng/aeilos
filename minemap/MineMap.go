@@ -85,13 +85,13 @@ func (m *MineMap) AreaEntryWriteBack(key string, keepInCache bool) {
 	}
 }
 
-func (m *MineMap) PersistAreaCache(keeyInCache bool) {
+func (m *MineMap) PersistAreaCache(keepInCache bool) {
 	fmt.Printf("persist cache: currently have %v areas in memory\n", len(m.areas))
 	for _, area := range m.areas {
 		m.persister.PersistArea(area)
 	}
 	// clear the cache
-	if !keeyInCache {
+	if !keepInCache {
 		m.areas = make(map[string]*MineArea)
 	}
 }
@@ -330,7 +330,7 @@ func (m *MineMap) operationLoop() {
 				m.persister.AddScore(strings.Split(msg.Client.RemoteAddr().String(), ":")[0], int(reply.Reply.GetTouch().GetScore()))
 
 			case *pb.ClientToServer_GetArea:
-				fmt.Printf("received GetArea request: %v\n", v)
+				// fmt.Printf("received GetArea request: %v\n", v)
 				reply.Reply = m.handleGetAreaRequest(v)
 				reply.Bcast = false
 
@@ -340,7 +340,7 @@ func (m *MineMap) operationLoop() {
 			m.CReply <- reply
 
 		case <-m.persister.pTicker.C:
-			m.PersistAreaCache(true)
+			m.PersistAreaCache(false)
 		}
 	}
 }
