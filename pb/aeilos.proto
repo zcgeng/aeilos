@@ -54,13 +54,19 @@ message Zeros {
 }
 
 message GetStats {
-	
+	string userName = 1;
+}
+
+message Stats {
+	string userName = 1;
+	int64 score = 2;
 }
 
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;
 		XY getArea = 2;
+		GetStats getStats = 3;
 	}
 }
 
@@ -71,5 +77,6 @@ message ServerToClient {
 		Cell update = 3;
 		Zeros updateZeros = 4;
 		string msg = 5;
+		Stats stats = 6;
 	}
 }

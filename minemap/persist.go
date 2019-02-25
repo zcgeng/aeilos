@@ -2,6 +2,8 @@ package minemap
 
 import (
 	"encoding/json"
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -57,8 +59,8 @@ func (p *Persister) LoadArea(key string) *MineArea {
 	return area
 }
 
-func (p *Persister) GetScore(user string) string {
-	return p.get("[score]" + user)
+func (p *Persister) GetScore(user string) int64 {
+	return p.getInt64("[score]" + user)
 }
 
 func (p *Persister) AddScore(user string, score int) {
@@ -93,6 +95,22 @@ func (p *Persister) set(key, value string) {
 	}
 }
 
+func (p *Persister) getInt64(key string) int64 {
+	val, err := redis.String(p.conn.Do("GET", key))
+	if err == redis.ErrNil {
+		return 0
+	} else if err != nil {
+		panic(err)
+	}
+
+	valInt, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		log.Fatalf("parseInt failed: %v, %v\n", val, err)
+	}
+	return valInt
+
+}
+
 func (p *Persister) get(key string) string {
 	val, err := redis.String(p.conn.Do("GET", key))
 	if err == redis.ErrNil {
@@ -100,8 +118,6 @@ func (p *Persister) get(key string) string {
 		return "(nil)"
 	} else if err != nil {
 		panic(err)
-	} else {
-		return val
 	}
-	return ""
+	return val
 }

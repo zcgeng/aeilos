@@ -23,8 +23,8 @@ class ScoreBoard extends React.Component {
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: 0,
@@ -40,6 +40,12 @@ export class Aeilos extends React.Component {
       xy.setY(this.state.y);
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
+
+      let msgGetStats = new pb.ClientToServer();
+      let getStats = new pb.GetStats();
+      getStats.setUsername("user1");
+      msgGetStats.setGetstats(getStats);
+      socket.send(msgGetStats.serializeBinary());
     });
 
     var that = this;
@@ -107,6 +113,18 @@ export class Aeilos extends React.Component {
               // })
               // var t1 = performance.now();
               // console.log("update takes: ", t1-t0);
+              break;
+
+            case pb.ServerToClient.ResponseCase.STATS:
+              let stats = response.getStats();
+              that.setState({
+                socket: that.state.socket,
+                curArea: that.state.curArea,
+                x: that.state.x,
+                y: that.state.y,
+                score: stats.getScore(),
+                // userName: stats.getUsername(),
+              })
               break;
             default:
               alert('error: response no type')

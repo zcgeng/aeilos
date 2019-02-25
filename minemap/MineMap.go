@@ -3,7 +3,6 @@ package minemap
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/websocket"
 	pb "github.com/zcgeng/aeilos/pb"
@@ -308,6 +307,18 @@ func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) *pb.ServerT
 	return &pb.ServerToClient{Response: &pb.ServerToClient_Area{Area: area}}
 }
 
+func (m *MineMap) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
+
+	user := v.GetStats.GetUserName()
+
+	stats := &pb.Stats{
+		UserName: user,
+		Score:    m.persister.GetScore(user),
+	}
+
+	return &pb.ServerToClient{Response: &pb.ServerToClient_Stats{Stats: stats}}
+}
+
 func (m *MineMap) operationLoop() {
 	fmt.Println("MineMap: operation loop begins")
 	for {
@@ -327,11 +338,16 @@ func (m *MineMap) operationLoop() {
 				fmt.Printf("received Touch request: %v\n", v)
 				reply.Reply = m.handleTouchRequest(v)
 				reply.Bcast = true
-				m.persister.AddScore(strings.Split(msg.Client.RemoteAddr().String(), ":")[0], int(reply.Reply.GetTouch().GetScore()))
+				m.persister.AddScore("user1", int(reply.Reply.GetTouch().GetScore()))
 
 			case *pb.ClientToServer_GetArea:
 				// fmt.Printf("received GetArea request: %v\n", v)
 				reply.Reply = m.handleGetAreaRequest(v)
+				reply.Bcast = false
+
+			case *pb.ClientToServer_GetStats:
+				fmt.Printf("received GetStats request: %v\n", v)
+				reply.Reply = m.handleGetStatsRequest(v)
 				reply.Bcast = false
 
 			default:
