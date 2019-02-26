@@ -20,7 +20,6 @@ ol, ul {
 .cellframe {
   border: 1px solid #bbb;
   float: left;
-  font-weight: bold;
   line-height: 18px;
   height: 28px;
   width: 28px;
@@ -37,6 +36,7 @@ ol, ul {
 
 .cell {
   font-size: 18px;
+  font-weight: bold;
   height: 100%;
   width: 100%;
   background: #ddd;
