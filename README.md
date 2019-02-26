@@ -4,16 +4,17 @@
 
 - Feature
 	- User register/login
-	- Score board
+	- Score of each user
+	- Punishment of minus-zero
 	- DIY flag
 	- Own an area
+	- Chat
 - Front
-	- Frontend beautify
 	- MiniMap
+	- Frontend beautify
 - Back
-	- Refine updateZeros
-	- Record user current area
-	- Stop global broadcasting
+	- Refine updateZeros() // because it might be slow
+	- Record user current area and Stop global broadcasting
 
 
 

@@ -129,7 +129,7 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 
 	b.Status = show
 	if b.Value != 0 {
-		score++
+		score += SCORE_RIGHT_FLIP
 	}
 
 	reply := &MMapToServer{
@@ -173,12 +173,12 @@ func (m *MineMap) ShowBlock(x, y int) int {
 	case 0:
 		return score
 	case 9:
-		return -50
+		return SCORE_WRONG_FLIP
 	case 11:
 		fmt.Println("impossible!! code:24u89kejnw9")
 		return 0
 	default:
-		return score + 1
+		return score + SCORE_RIGHT_FLIP
 	}
 }
 
@@ -197,12 +197,12 @@ func (m *MineMap) putFlag(x, y int, user string) int {
 	case 9:
 		b.Status = flag
 		b.User = user
-		return 10
+		return SCORE_RIGHT_FLAG
 
 	default:
 		b.Status = show
 		b.User = user
-		return -1
+		return SCORE_WRONG_FLAG
 	}
 }
 
