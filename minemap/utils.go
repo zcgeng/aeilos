@@ -1,7 +1,7 @@
 package minemap
 
 const ROW_LENGTH = 40
-const ROW_HEIGHT = 20
+const ROW_HEIGHT = 25
 
 func block2area(x, y int) (int, int) {
 	ax := x / 100

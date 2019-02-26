@@ -200,6 +200,9 @@ export class Aeilos extends React.Component {
   }
 
   handleCoordX(event) {
+    if(event.target.value == "") {
+      return
+    }
     let msg = new pb.ClientToServer();
     let xy = new pb.XY();
     xy.setX(parseInt(event.target.value, 10));
@@ -214,6 +217,9 @@ export class Aeilos extends React.Component {
   }
 
   handleCoordY(event) {
+    if(event.target.value == "") {
+      return
+    }
     let msg = new pb.ClientToServer();
     let xy = new pb.XY();
     xy.setX(this.state.x);

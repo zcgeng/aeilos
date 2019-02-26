@@ -1,7 +1,7 @@
 const pb = require('./aeilos_pb');
 
 export const ROW_LENGTH = 40;
-export const ROW_HEIGHT = 20;
+export const ROW_HEIGHT = 25;
 
 export function InsideArea(x, y, ax, ay) {
   return (x >= ax) && (y >= ay) && (x < ax+ROW_HEIGHT) && (y < ay+ROW_LENGTH);

@@ -48,14 +48,21 @@ ol, ul {
 }
 
 .area {
-  width: 1200px;
-  height: 600px;
+  width: 1160px;
+  height: 725px;
   display: inline-block;
   float: left;
 }
 
 .controlplane {
-  float: left;
+  border: 1px solid #999;
+  margin: -1px;
+  padding: 3px;
+  z-index: 2;
+  width: 220px;
+  position: absolute;
+  right: 20px;
+  background: #fff;
 }
 
 .scoreboard {
