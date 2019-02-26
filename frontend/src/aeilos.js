@@ -29,8 +29,8 @@ export class Aeilos extends React.Component {
     // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
-      x: 0,
-      y: 0,
+      x: Math.floor(Math.random() * 200)-100,
+      y: Math.floor(Math.random() * 200)-100,
       score: 0,
       curArea: [],
     };
