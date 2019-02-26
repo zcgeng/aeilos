@@ -17,19 +17,17 @@ ol, ul {
   margin-bottom: 10px;
 }
 
-.square {
-  background: #fff;
-  border: 1px solid #999;
+.cellframe {
+  border: 1px solid #bbb;
   float: left;
-  font-size: 20px;
   font-weight: bold;
-  line-height: 30px;
-  height: 30px;
+  line-height: 18px;
+  height: 28px;
+  width: 28px;
   margin-right: -1px;
   margin-top: -1px;
   padding: 0;
   text-align: center;
-  width: 30px;
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select:none;
@@ -37,14 +35,38 @@ ol, ul {
   -o-user-select:none;
 }
 
-.square:focus {
+.cell {
+  font-size: 18px;
+  height: 100%;
+  width: 100%;
+  background: #ddd;
+  border: 1px solid #ddd;
+}
+
+.cell-untouched {
+  height: 100%;
+  width: 100%;
   background: #ccc;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #fff #999 #999 #fff;
+}
+
+.cell:focus {
+  background: #ddd;
   outline: none;
 }
 
-.square:hover {
-  background: #eee;
+.cell-untouched:focus {
+  background: #bbb;
+}
+
+.cell:hover {
   outline: none;
+}
+
+.cell-untouched:hover {
+  background: #ddd;
 }
 
 .area {
@@ -66,7 +88,7 @@ ol, ul {
 }
 
 .scoreboard {
-  font-size: 100px;
+  font-size: 60px;
   text-align: center;
   display: inline-block;
   background: #ddd;
@@ -76,7 +98,7 @@ ol, ul {
   display: block;
 }
 
-.kbd-navigation .square:focus {
+.kbd-navigation .cell:focus {
   background: #ddd;
 }
 

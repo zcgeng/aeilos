@@ -12,8 +12,10 @@ class ScoreBoard extends React.Component {
 
   render() {
     return (
-      <div className="scoreboard">
-        {this.props.score}
+      <div>
+        <div className="scoreboard">
+          {this.props.score}
+        </div>
       </div>
     );
   }
@@ -23,8 +25,8 @@ class ScoreBoard extends React.Component {
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: 0,

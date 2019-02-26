@@ -10,7 +10,7 @@ export function InsideArea(x, y, ax, ay) {
 export function getCellDesc(pbcell) {
   switch(pbcell.getCelltypeCase()) {
     case pb.Cell.CelltypeCase.BOMBS:
-      if(pbcell.getBombs() === 0) return '0';
+      if(pbcell.getBombs() === 0) return '';
       if(pbcell.getBombs() === 9) return '💣';
       if(pbcell.getBombs() === 11) return '??';
       return pbcell.getBombs();
@@ -24,6 +24,25 @@ export function getCellDesc(pbcell) {
   }
 }
 
+export function getCellClassName(pbcell) {
+  let className = 'cell'
+  switch(pbcell.getCelltypeCase()) {
+    case pb.Cell.CelltypeCase.BOMBS:
+      className += ' cell-number';
+      break;
+    case pb.Cell.CelltypeCase.UNTOUCHED:
+      className += ' cell-untouched';
+      break;
+    case pb.Cell.CelltypeCase.FLAGURL:
+      className += ' cell-flag';
+      break;
+    default:
+      alert('error: cell no type');
+      break;
+  }
+  return className;
+}
+
 export function cellIsBomb(pbcell) {
   return (pbcell.getCelltypeCase()===pb.Cell.CelltypeCase.BOMBS) && (pbcell.getBombs() === 9);
 }
@@ -34,6 +53,10 @@ export function cellIsNumber(pbcell) {
 
 export function cellIsFlag(pbcell) {
   return (pbcell.getCelltypeCase()===pb.Cell.CelltypeCase.FLAGURL);
+}
+
+export function cellIsUntouched(pbcell) {
+  return (pbcell.getCelltypeCase()===pb.Cell.CelltypeCase.UNTOUCHED);
 }
 
 export function cellIsBombOrFlag(pbcell) {

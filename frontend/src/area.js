@@ -1,5 +1,5 @@
 import React from 'react';
-import {cellIsBombOrFlag,ROW_HEIGHT,ROW_LENGTH,getCellNumber,getCellDesc} from './utils'
+import {cellIsBombOrFlag,ROW_HEIGHT,ROW_LENGTH,getCellNumber,getCellDesc,getCellClassName} from './utils'
 import {Cell} from './cell'
 const pb = require('./aeilos_pb');
 
@@ -148,27 +148,30 @@ export class Area extends React.Component {
 
     const cellBoard = mmap.map((row, i) => {
       const cellRow = row.map((val, j) => {
-        return <Cell 
+        let globX = this.props.baseXY.x+i;
+        let globY = this.props.baseXY.y+j;
+        return <Cell
+          className={getCellClassName(this.props.curArea[i][j])}
           key={j} 
           value={val} 
-          x={this.props.baseXY.x+i} 
-          y={this.props.baseXY.y+j}
+          x={globX} 
+          y={globY}
           onClick={
             (event)=>{
               event.preventDefault();
-              this.handleClick(this.props.baseXY.x+i, this.props.baseXY.y+j, event);
+              this.handleClick(globX, globY, event);
             }
           }
           onContextMenu={
             (event)=>{
               event.preventDefault();
-              this.handleClick(this.props.baseXY.x+i, this.props.baseXY.y+j, event);
+              this.handleClick(globX, globY, event);
             }
           }
           onMouseDown={this.handleMouseDown.bind(this)}
           onMouseUp={
             (event)=>{
-              this.handleMouseUp(this.props.baseXY.x+i, this.props.baseXY.y+j, event);
+              this.handleMouseUp(globX, globY, event);
             }
           }
         />
