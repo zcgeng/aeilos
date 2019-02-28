@@ -33,6 +33,7 @@ export class Aeilos extends React.Component {
       y: Math.floor(Math.random() * 200)-100,
       score: 0,
       curArea: [],
+      areas: {},
     };
 
     socket.addEventListener('open', (event)=>{
@@ -68,10 +69,7 @@ export class Aeilos extends React.Component {
               let {x, y} = that.glob2local(cell.getX(), cell.getY())
               newArea[x][y] = cell;
               that.setState({
-                socket: that.state.socket,
                 curArea: newArea,
-                x: that.state.x,
-                y: that.state.y,
                 score: that.state.score + response.getTouch().getScore()
               })
               break;
@@ -83,11 +81,9 @@ export class Aeilos extends React.Component {
               while(cellsList.length) 
                 cells2d.push(cellsList.splice(0,ROW_LENGTH))
               that.setState({
-                socket: that.state.socket,
                 curArea: cells2d,
                 x: response.getArea().getX(),
                 y: response.getArea().getY(),
-                score: that.state.score,
               })
 
               break;
@@ -110,8 +106,6 @@ export class Aeilos extends React.Component {
               /* TOOOOOO SLOW!!!! */
               // that.setState({
               //   curArea: newArea1,
-              //   baseXY: that.state.baseXY,
-              //   socket: that.state.socket,
               // })
               // var t1 = performance.now();
               // console.log("update takes: ", t1-t0);
@@ -120,10 +114,6 @@ export class Aeilos extends React.Component {
             case pb.ServerToClient.ResponseCase.STATS:
               let stats = response.getStats();
               that.setState({
-                socket: that.state.socket,
-                curArea: that.state.curArea,
-                x: that.state.x,
-                y: that.state.y,
                 score: stats.getScore(),
                 // userName: stats.getUsername(),
               })
@@ -140,9 +130,9 @@ export class Aeilos extends React.Component {
     return {x: x - this.state.x, y: y - this.state.y};
   }
 
-  renderArea(x, y) {
+  renderArea() {
     return (<Area 
-      baseXY={{x, y}} 
+      baseXY={{x:this.state.x, y:this.state.y}}
       socket={this.state.socket}
       curArea={this.state.curArea}
     />)
@@ -177,11 +167,10 @@ export class Aeilos extends React.Component {
     xy.setY(this.state.y + yMove);
     msg.setGetarea(xy);
     this.state.socket.send(msg.serializeBinary());
-    this.setState({
-      socket: this.state.socket,
-      x: this.state.x + xMove,
-      y: this.state.y + yMove,
-    });
+    // this.setState({
+    //   x: this.state.x + xMove,
+    //   y: this.state.y + yMove,
+    // });
   }
 
   handleMoveMap(direction) {
@@ -195,7 +184,6 @@ export class Aeilos extends React.Component {
     msg.setGetarea(xy);
     this.state.socket.send(msg.serializeBinary());
     this.setState({
-      socket: this.state.socket,
       x: this.state.x + xmoves[direction],
       y: this.state.y + ymoves[direction],
     });
@@ -212,9 +200,7 @@ export class Aeilos extends React.Component {
     msg.setGetarea(xy);
     this.state.socket.send(msg.serializeBinary());
     this.setState({
-      socket: this.state.socket,
       x: parseInt(event.target.value, 10),
-      y: this.state.y,
     });
   }
 
@@ -229,8 +215,6 @@ export class Aeilos extends React.Component {
     msg.setGetarea(xy);
     this.state.socket.send(msg.serializeBinary());
     this.setState({
-      socket: this.state.socket,
-      x: this.state.x,
       y: parseInt(event.target.value, 10),
     });
   }
@@ -239,7 +223,7 @@ export class Aeilos extends React.Component {
     return (
       <div className="aeilos">
         <div className="area" onWheel={(e)=>{e.preventDefault();this.handleWheel(e);}}>
-          {this.renderArea(this.state.x, this.state.y)}
+          {this.renderArea()}
         </div>
 
         <div className="controlplane">

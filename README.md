@@ -11,7 +11,9 @@
 	- Chat
 - Front
 	- MiniMap
+	- Adjust onWheel
 	- Frontend beautify
+	- Cache areas
 - Back
 	- Refine updateZeros() // because it might be slow
 	- Record user current area and Stop global broadcasting
