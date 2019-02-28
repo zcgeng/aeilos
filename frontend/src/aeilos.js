@@ -33,7 +33,7 @@ export class Aeilos extends React.Component {
       y: Math.floor(Math.random() * 200)-100,
       score: 0,
       curArea: [],
-      areas: {},
+      lastWheel: new Date().getTime(),
     };
 
     socket.addEventListener('open', (event)=>{
@@ -139,6 +139,14 @@ export class Aeilos extends React.Component {
   }
 
   handleWheel(e) {
+
+    const thisWheel = new Date().getTime();
+    if(thisWheel-this.state.lastWheel < 50) {
+      return
+    }
+    this.setState({
+      lastWheel: thisWheel,
+    });
     let xMove = 0;
     let yMove = 0;
     if(e.deltaY < 10 && e.deltaY > 0) {
@@ -159,6 +167,10 @@ export class Aeilos extends React.Component {
     }
     else {
       yMove = Math.round(e.deltaX/80)
+    }
+
+    if(xMove ===0 && yMove === 0) {
+      return;
     }
 
     let msg = new pb.ClientToServer();
