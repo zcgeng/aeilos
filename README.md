@@ -31,7 +31,7 @@ $ cd pb; ./generate.sh;
 
 ### Build frontend
 ```sh
-$ cd frontend; npm run build;
+$ cd frontend; ./deploy.sh;
 ```
 
 ### Build backend

@@ -53,12 +53,11 @@ ol, ul {
 }
 
 .cell:focus {
-  background: #ddd;
   outline: none;
 }
 
 .cell-untouched:focus {
-  background: #bbb;
+  outline: none;
 }
 
 .cell:hover {
@@ -66,7 +65,15 @@ ol, ul {
 }
 
 .cell-untouched:hover {
-  background: #ddd;
+  background: #dddddd;
+}
+
+.area-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: inline-block;
+  float: left;
 }
 
 .area {
@@ -92,6 +99,35 @@ ol, ul {
   text-align: center;
   display: inline-block;
   background: #ddd;
+}
+
+.chatbox {
+  overflow: hidden;
+}
+
+.chatdata {
+  font-family: arial, sans-serif;
+  font-weight:normal;
+  font-size: 15px;
+  height: 400px;
+  width: 100%;
+  top: 0;
+  left: 0;
+  overflow-y: scroll; 
+  overflow-x: hidden;
+}
+
+.chatmsg {
+  margin: 0px;
+   white-space: pre-wrap;      /* CSS3 */   
+   white-space: -moz-pre-wrap; /* Firefox */    
+   white-space: -pre-wrap;     /* Opera <7 */   
+   white-space: -o-pre-wrap;   /* Opera 7 */    
+   word-wrap: break-word;      /* IE */
+}
+
+.inputcoord {
+  width: 40px;
 }
 
 .navbuttons {

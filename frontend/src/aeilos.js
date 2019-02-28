@@ -1,15 +1,12 @@
 import React from 'react';
 import ReconnectingWebsocket from 'reconnecting-websocket';
 import { Area } from './area.js'
+import { ChatBox } from './chatbox.js'
 import {InsideArea, ROW_LENGTH} from './utils';
 import './index.css';
 const pb = require('./aeilos_pb');
 
 class ScoreBoard extends React.Component {
-  // constructor(props) {
-  //   super(props);
-  // }
-
   render() {
     return (
       <div>
@@ -21,12 +18,11 @@ class ScoreBoard extends React.Component {
   }
 }
 
-
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,
@@ -34,6 +30,9 @@ export class Aeilos extends React.Component {
       score: 0,
       curArea: [],
       lastWheel: new Date().getTime(),
+      chatData: [],
+      chatMsg: '',
+      chatUserName: 'somebody',
     };
 
     socket.addEventListener('open', (event)=>{
@@ -89,7 +88,10 @@ export class Aeilos extends React.Component {
               break;
 
             case pb.ServerToClient.ResponseCase.MSG:
-              console.log(response.getMsg());
+              let chatData = that.state.chatData.slice();
+              that.setState({
+                chatData: chatData.concat([response.getMsg()]),
+              });
               break;
 
             case pb.ServerToClient.ResponseCase.UPDATE:
@@ -231,48 +233,69 @@ export class Aeilos extends React.Component {
     });
   }
 
+  handleChatSend(event) {
+    if(this.state.chatMsg === "") {
+      return;
+    }
+    // send the message
+    let msg = new pb.ClientToServer();
+    msg.setChatmsg(this.state.chatUserName+': '+this.state.chatMsg);
+    this.state.socket.send(msg.serializeBinary());
+
+    // after sending
+    this.setState({chatMsg:""})
+  }
+
   render() {
     return (
       <div className="aeilos">
+        <div className="area-container">
         <div className="area" onWheel={(e)=>{e.preventDefault();this.handleWheel(e);}}>
           {this.renderArea()}
+        </div>
         </div>
 
         <div className="controlplane">
           <ScoreBoard score={this.state.score}/>
 
           <div className="navbuttons">
+            <div>
+            Current location: ({this.state.x}, {this.state.y})
+            </div>
             <button onClick={()=>{
               this.handleMoveMap(0);
             }}>
-              Go UP
+              ⬆
             </button>
             <button onClick={()=>{
               this.handleMoveMap(1);
             }}>
-              Go DOWN
+              ⬇
             </button>
             <button onClick={()=>{
               this.handleMoveMap(2);
             }}>
-              Go LEFT
+              ⬅
             </button>
             <button onClick={()=>{
               this.handleMoveMap(3);
             }}>
-              Go RIGHT
+              ➡
             </button>
             <div>
-            Current location: ({this.state.x}, {this.state.y})
-            </div>
-
-            <div>
-              Jump to coordinate:
-              <input type="number" value={this.state.x} onChange={this.handleCoordX.bind(this)} />
-              <input type="number" value={this.state.y} onChange={this.handleCoordY.bind(this)} />
+              Jump to:
+              <input className="inputcoord" type="number" value={this.state.x} onChange={this.handleCoordX.bind(this)} />
+              <input className="inputcoord" type="number" value={this.state.y} onChange={this.handleCoordY.bind(this)} />
             </div>
           </div>
-          <div>You can also use [scroll wheel] or [shift]+[scroll wheel] to move</div>
+          <hr/>
+          <ChatBox 
+            onClick={()=>{this.handleChatSend();}}
+            chatData={this.state.chatData}
+            value={this.state.chatMsg}
+            handleMsgChange={(e)=>{this.setState({chatMsg: e.target.value})}}
+            handleUserName={(e)=>{this.setState({chatUserName: e.target.value})}}
+          />
         </div>
 
         

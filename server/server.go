@@ -25,7 +25,10 @@ type MineServer struct {
 // NewMineServer ...
 func NewMineServer() *MineServer {
 	ms := new(MineServer)
-	ms.persister = minemap.NewPersister(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
+	ms.persister = minemap.NewPersister(
+		os.Getenv("REDIS_ADDRESS"),
+		os.Getenv("REDIS_PASSWORD"),
+	)
 	ms.mmap = minemap.NewMineMap(ms.persister)
 	ms.clients = make(map[*websocket.Conn]bool)
 	ms.upgrader = websocket.Upgrader{
@@ -67,7 +70,8 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	// Make sure we close the connection when the function returns
 	defer ws.Close()
 	record := "{login: " + time.Now().Local().String() + "}"
-	fmt.Printf("on connection: %v %v\n", strings.Split(ws.RemoteAddr().String(), ":")[0], record)
+	fmt.Printf("on connection: %v %v\n",
+		strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
 	// Register our new client
 	s.clients[ws] = true
@@ -75,7 +79,8 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	s.persister.RecordByIP(strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
 	for {
-		var msg pb.ClientToServer // Read in a new message as pb and map it to a Message object
+		// Read in a new message as pb and map it to a Message object
+		var msg pb.ClientToServer
 		_, data, err := ws.ReadMessage()
 		if err != nil {
 			log.Printf("Read message error: %v", err)
@@ -91,12 +96,25 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// Send the newly received message to mine engine
-		cmd := &minemap.ServerToMMap{
-			Cmd:    &msg,
-			Client: ws,
+		// deal with logistic messages
+		switch v := msg.GetRequest().(type) {
+		case *pb.ClientToServer_ChatMsg:
+			fmt.Printf("received chat message: %v\n", v.ChatMsg)
+			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: v.ChatMsg}}
+			reply := &minemap.MMapToServer{
+				Reply:  rpl,
+				Client: ws,
+				Bcast:  true,
+			}
+			s.mmap.CReply <- reply
+		default:
+			// Send the newly received message to mine engine
+			cmd := &minemap.ServerToMMap{
+				Cmd:    &msg,
+				Client: ws,
+			}
+			s.mmap.CCommand <- cmd
 		}
-		s.mmap.CCommand <- cmd
 	}
 }
 

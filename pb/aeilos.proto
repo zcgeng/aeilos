@@ -67,6 +67,7 @@ message ClientToServer {
 		TouchRequest touch = 1;
 		XY getArea = 2;
 		GetStats getStats = 3;
+		string chatMsg = 4;
 	}
 }
 
