@@ -78,6 +78,18 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 	s.persister.RecordByIP(strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
+	// send the message history
+	msgs := s.persister.GetChatMsg(0, -1)
+	for _, msg := range msgs {
+		rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: msg}}
+		data, err := proto.Marshal(rpl)
+		if err != nil {
+			log.Fatalf("Marshal error: %v", err)
+			return
+		}
+		s.sendMsg(data, ws)
+	}
+
 	for {
 		// Read in a new message as pb and map it to a Message object
 		var msg pb.ClientToServer
@@ -100,6 +112,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 		switch v := msg.GetRequest().(type) {
 		case *pb.ClientToServer_ChatMsg:
 			fmt.Printf("received chat message: %v\n", v.ChatMsg.Msg)
+			s.persister.RecordChatMsg(v.ChatMsg)
 			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: v.ChatMsg}}
 			reply := &minemap.MMapToServer{
 				Reply:  rpl,

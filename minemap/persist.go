@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/gomodule/redigo/redis"
+	"github.com/zcgeng/aeilos/pb"
 )
 
 // https://itnext.io/storing-go-structs-in-redis-using-rejson-dab7f8fc0053
@@ -71,6 +73,29 @@ func (p *Persister) RecordByIP(ip string, value string) {
 	p.lpush("[ip]"+ip, value)
 }
 
+func (p *Persister) RecordChatMsg(v *pb.ChatMsg) {
+	marshaled, err := proto.Marshal(v)
+	if err != nil {
+		return
+	}
+	p.rpush("[chatMsg]", string(marshaled))
+}
+
+func (p *Persister) GetChatMsg(start, stop int) []*pb.ChatMsg {
+	res := make([]*pb.ChatMsg, 0)
+	msgs := p.lrange("[chatMsg]", start, stop)
+	for _, data := range msgs {
+		var msg pb.ChatMsg
+		err := proto.Unmarshal([]byte(data), &msg)
+		if err != nil {
+			log.Printf("unmarshal error: %v", err)
+			break
+		}
+		res = append(res, &msg)
+	}
+	return res
+}
+
 // -------------------- method abstractions ----------------
 
 func (p *Persister) incrby(key string, value int) {
@@ -86,6 +111,21 @@ func (p *Persister) lpush(key, value string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (p *Persister) rpush(key, value string) {
+	_, err := p.conn.Do("RPUSH", key, value)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (p *Persister) lrange(key string, start, stop int) []string {
+	val, err := redis.Strings(p.conn.Do("LRANGE", key, start, stop))
+	if err != nil {
+		panic(err)
+	}
+	return val
 }
 
 func (p *Persister) set(key, value string) {
