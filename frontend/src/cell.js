@@ -5,10 +5,10 @@ export function Cell(props) {
     <div 
       className="cellframe"
       onClick={props.onClick}
+      onDoubleClick={props.onDoubleClick}
       onContextMenu={props.onContextMenu}
       onMouseDown={props.onMouseDown}
       onMouseUp={props.onMouseUp}
-      onDoubleClick={(e)=>{}}
       unselectable="on"
       // onSelectStart="return false;" 
     >

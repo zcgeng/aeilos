@@ -125,6 +125,12 @@ export class Area extends React.Component {
     this.props.socket.send(msg.serializeBinary());
   }
 
+  handleDoubleClick(globX, globY, e) {
+    console.log("doubleclick")
+    // global x and global y
+    this.handleSimulClick(globX, globY);
+  }
+
   handleClick(globX, globY, e) {
     // global x and global y
     let {x, y} = this.glob2local(globX, globY)
@@ -156,6 +162,12 @@ export class Area extends React.Component {
           value={val} 
           x={globX} 
           y={globY}
+          onDoubleClick={
+            (event)=>{
+              event.preventDefault();
+              this.handleDoubleClick(globX, globY, event);
+            }
+          }
           onClick={
             (event)=>{
               event.preventDefault();
