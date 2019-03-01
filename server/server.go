@@ -99,7 +99,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 		// deal with logistic messages
 		switch v := msg.GetRequest().(type) {
 		case *pb.ClientToServer_ChatMsg:
-			fmt.Printf("received chat message: %v\n", v.ChatMsg)
+			fmt.Printf("received chat message: %v\n", v.ChatMsg.Msg)
 			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: v.ChatMsg}}
 			reply := &minemap.MMapToServer{
 				Reply:  rpl,

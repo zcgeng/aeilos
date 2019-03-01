@@ -62,12 +62,18 @@ message Stats {
 	int64 score = 2;
 }
 
+message ChatMsg {
+	string userName = 1;
+	string msg = 2;
+	int64 time = 3;
+}
+
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;
 		XY getArea = 2;
 		GetStats getStats = 3;
-		string chatMsg = 4;
+		ChatMsg chatMsg = 4;
 	}
 }
 
@@ -77,7 +83,7 @@ message ServerToClient {
 		Area area = 2;
 		Cell update = 3;
 		Zeros updateZeros = 4;
-		string msg = 5;
+		ChatMsg msg = 5;
 		Stats stats = 6;
 	}
 }

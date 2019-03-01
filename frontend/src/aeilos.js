@@ -239,7 +239,11 @@ export class Aeilos extends React.Component {
     }
     // send the message
     let msg = new pb.ClientToServer();
-    msg.setChatmsg(this.state.chatUserName+': '+this.state.chatMsg);
+    let chatMsg = new pb.ChatMsg();
+    chatMsg.setUsername(this.state.chatUserName);
+    chatMsg.setMsg(this.state.chatMsg);
+    chatMsg.setTime(new Date().getTime());
+    msg.setChatmsg(chatMsg);
     this.state.socket.send(msg.serializeBinary());
 
     // after sending

@@ -15,7 +15,11 @@ export class ChatBox extends React.Component {
   renderChatData() {
     let data = this.props.chatData;
     return data.map((s, i)=>{
-      return(<p className='chatmsg' key={i}>{s}</p>);
+      return(<p className='chatmsg' key={i}>
+        <font size="1" color="green">[{new Date(s.getTime()).toLocaleTimeString()}]</font>
+        <font color="blue">{s.getUsername()}: </font>
+        {s.getMsg()}
+        </p>);
     });
   }
 
