@@ -2,6 +2,7 @@ package minemap
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gorilla/websocket"
 	pb "github.com/zcgeng/aeilos/pb"
@@ -26,11 +27,14 @@ type MMapToServer struct {
 	Bcast  bool
 }
 
-func NewMMapThread(persis *Persister) *MMapThread {
+func NewMMapThread() *MMapThread {
 	m := &MMapThread{}
 
-	m.mine = NewMineMap(persis)
-	m.persister = persis
+	m.mine = NewMineMap()
+	m.persister = NewPersister(
+		os.Getenv("REDIS_ADDRESS"),
+		os.Getenv("REDIS_PASSWORD"),
+	)
 	m.CCommand = make(chan *ServerToMMap, 1000)
 	m.CReply = make(chan *MMapToServer, 1000)
 	m.run()
@@ -75,18 +79,6 @@ func (m *MMapThread) handleGetAreaRequest(v *pb.ClientToServer_GetArea) *pb.Serv
 	return &pb.ServerToClient{Response: &pb.ServerToClient_Area{Area: area}}
 }
 
-func (m *MMapThread) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
-
-	user := v.GetStats.GetUserName()
-
-	stats := &pb.Stats{
-		UserName: user,
-		Score:    m.persister.GetScore(user),
-	}
-
-	return &pb.ServerToClient{Response: &pb.ServerToClient_Stats{Stats: stats}}
-}
-
 func (m *MMapThread) operationLoop() {
 	fmt.Println("MineMap: operation loop begins")
 	for {
@@ -113,21 +105,14 @@ func (m *MMapThread) operationLoop() {
 					}
 					touch, ok := m2s.Reply.Response.(*pb.ServerToClient_Touch)
 					if ok {
-						m.persister.AddScore("user1", int(touch.Touch.GetScore()))
+						m.persister.AddScore(v.Touch.GetUser(), int(touch.Touch.GetScore()))
 					}
-					fmt.Printf("reply: %v\n", m2s)
 					m.CReply <- m2s
 				}
 
 			case *pb.ClientToServer_GetArea:
 				// fmt.Printf("received GetArea request: %v\n", v)
 				reply.Reply = m.handleGetAreaRequest(v)
-				reply.Bcast = false
-				m.CReply <- reply
-
-			case *pb.ClientToServer_GetStats:
-				fmt.Printf("received GetStats request: %v\n", v)
-				reply.Reply = m.handleGetStatsRequest(v)
 				reply.Bcast = false
 				m.CReply <- reply
 

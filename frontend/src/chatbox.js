@@ -27,13 +27,6 @@ export class ChatBox extends React.Component {
     return (
       <div className="chatbox">
         <h3> Chat room </h3>
-        <div>
-          Username:
-          <input
-            onChange={(e)=>{this.props.handleUserName(e)}}
-            placeholder="somebody"
-          />
-        </div>
         <div className="chatdata">
           <div>
           {this.renderChatData()}

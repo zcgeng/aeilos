@@ -9,7 +9,6 @@ type MineUser struct {
 	Password string
 	FlagURL  string
 	Email    string
-	Score    int
 }
 
 func (u *MineUser) ToString() string {

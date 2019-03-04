@@ -68,12 +68,18 @@ message ChatMsg {
 	int64 time = 3;
 }
 
+message EmailPswd {
+	string email = 1;
+	string password = 2;
+}
+
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;
 		XY getArea = 2;
 		GetStats getStats = 3;
 		ChatMsg chatMsg = 4;
+		EmailPswd login = 5;
 	}
 }
 

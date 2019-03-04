@@ -30,7 +30,7 @@ func NewMineServer() *MineServer {
 		os.Getenv("REDIS_ADDRESS"),
 		os.Getenv("REDIS_PASSWORD"),
 	)
-	ms.mmap = minemap.NewMMapThread(ms.persister)
+	ms.mmap = minemap.NewMMapThread()
 	ms.clients = make(map[*websocket.Conn]bool)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -90,6 +90,20 @@ func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (m *MineServer) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
+	user := v.GetStats.GetUserName()
+	return m.handleGetStats(user)
+}
+
+func (m *MineServer) handleGetStats(user string) *pb.ServerToClient {
+	stats := &pb.Stats{
+		UserName: user,
+		Score:    m.persister.GetScore(user),
+	}
+
+	return &pb.ServerToClient{Response: &pb.ServerToClient_Stats{Stats: stats}}
+}
+
 func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	// Upgrade initial GET request to a websocket
 	ws, err := s.upgrader.Upgrade(w, r, nil)
@@ -138,7 +152,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// deal with logistic messages
+		// deal with misc messages
 		switch v := msg.GetRequest().(type) {
 		case *pb.ClientToServer_ChatMsg:
 			fmt.Printf("received chat message: %v\n", v.ChatMsg.Msg)
@@ -150,6 +164,54 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 				Bcast:  true,
 			}
 			s.mmap.CReply <- reply
+
+		case *pb.ClientToServer_GetStats:
+			fmt.Printf("received GetStats request: %v\n", v)
+			reply := &minemap.MMapToServer{
+				Reply:  s.handleGetStatsRequest(v),
+				Client: ws,
+				Bcast:  false,
+			}
+			s.mmap.CReply <- reply
+
+		case *pb.ClientToServer_Login:
+			fmt.Printf("received login: %v\n", v.Login)
+			user := s.persister.GetUser(v.Login.Email)
+
+			if user == nil || v.Login.Password != user.Password {
+				rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: &pb.ChatMsg{
+					Msg:      "User doesn't exist or wrong password",
+					UserName: "System",
+					Time:     time.Now().Unix(),
+				}}}
+				reply := &minemap.MMapToServer{
+					Reply:  rpl,
+					Client: ws,
+					Bcast:  false,
+				}
+				s.mmap.CReply <- reply
+				break
+			}
+
+			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: &pb.ChatMsg{
+				Msg:      "Login success!",
+				UserName: "System",
+				Time:     time.Now().Unix(),
+			}}}
+			reply := &minemap.MMapToServer{
+				Reply:  rpl,
+				Client: ws,
+				Bcast:  false,
+			}
+			s.mmap.CReply <- reply
+
+			reply = &minemap.MMapToServer{
+				Reply:  s.handleGetStats(user.Email),
+				Client: ws,
+				Bcast:  false,
+			}
+			s.mmap.CReply <- reply
+
 		default:
 			// Send the newly received message to mine engine
 			cmd := &minemap.ServerToMMap{

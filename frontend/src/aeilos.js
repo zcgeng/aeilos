@@ -13,6 +13,16 @@ class ScoreBoard extends React.Component {
         <div className="scoreboard">
           {this.props.score}
         </div>
+
+        <div>
+          Logged in as: {this.props.email}
+        </div>
+
+        <div className="login">
+          <input placeholder="Email" onChange={this.props.onUsernameChange}/>
+          <input placeholder="Password" type="password" onChange={this.props.onPasswdChange}/>
+          <button onClick={this.props.onLogin}> Login </button>
+        </div>
       </div>
     );
   }
@@ -21,8 +31,8 @@ class ScoreBoard extends React.Component {
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,
@@ -32,7 +42,9 @@ export class Aeilos extends React.Component {
       lastWheel: new Date().getTime(),
       chatData: [],
       chatMsg: '',
-      chatUserName: 'somebody',
+      inputemail: '',
+      inputpassword: '',
+      email: 'user1',
     };
 
     socket.addEventListener('open', (event)=>{
@@ -45,7 +57,7 @@ export class Aeilos extends React.Component {
 
       let msgGetStats = new pb.ClientToServer();
       let getStats = new pb.GetStats();
-      getStats.setUsername("user1");
+      getStats.setUsername(this.state.email);
       msgGetStats.setGetstats(getStats);
       socket.send(msgGetStats.serializeBinary());
     });
@@ -116,6 +128,7 @@ export class Aeilos extends React.Component {
             case pb.ServerToClient.ResponseCase.STATS:
               let stats = response.getStats();
               that.setState({
+                email: stats.getUsername(),
                 score: stats.getScore(),
                 // userName: stats.getUsername(),
               })
@@ -135,6 +148,7 @@ export class Aeilos extends React.Component {
   renderArea() {
     return (<Area 
       baseXY={{x:this.state.x, y:this.state.y}}
+      email={this.state.email}
       socket={this.state.socket}
       curArea={this.state.curArea}
     />)
@@ -240,7 +254,7 @@ export class Aeilos extends React.Component {
     // send the message
     let msg = new pb.ClientToServer();
     let chatMsg = new pb.ChatMsg();
-    chatMsg.setUsername(this.state.chatUserName);
+    chatMsg.setUsername(this.state.email);
     chatMsg.setMsg(this.state.chatMsg);
     chatMsg.setTime(new Date().getTime());
     msg.setChatmsg(chatMsg);
@@ -248,6 +262,23 @@ export class Aeilos extends React.Component {
 
     // after sending
     this.setState({chatMsg:""})
+  }
+
+  recordPassword(event) {
+    this.setState({inputpassword: event.target.value})
+  }
+
+  recordEmail(event) {
+    this.setState({inputemail: event.target.value})
+  }
+
+  handleLogin(event) {
+    let msg = new pb.ClientToServer();
+    let login = new pb.EmailPswd();
+    login.setEmail(this.state.inputemail);
+    login.setPassword(this.state.inputpassword);
+    msg.setLogin(login);
+    this.state.socket.send(msg.serializeBinary());
   }
 
   render() {
@@ -260,7 +291,13 @@ export class Aeilos extends React.Component {
         </div>
 
         <div className="controlplane">
-          <ScoreBoard score={this.state.score}/>
+          <ScoreBoard 
+            score={this.state.score}
+            email={this.state.email}
+            onLogin={this.handleLogin.bind(this)}
+            onUsernameChange={this.recordEmail.bind(this)}
+            onPasswdChange={this.recordPassword.bind(this)}
+          />
 
           <div className="navbuttons">
             <div>
@@ -298,7 +335,6 @@ export class Aeilos extends React.Component {
             chatData={this.state.chatData}
             value={this.state.chatMsg}
             handleMsgChange={(e)=>{this.setState({chatMsg: e.target.value})}}
-            handleUserName={(e)=>{this.setState({chatUserName: e.target.value})}}
           />
         </div>
 

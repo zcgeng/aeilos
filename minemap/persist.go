@@ -101,17 +101,21 @@ func (p *Persister) NewUser(user *mineuser.MineUser) bool {
 	if p.UserExists(user.Email) {
 		return false
 	}
-	p.set(user.Email, "[user]"+user.ToString())
+	p.set("[user]"+user.Email, user.ToString())
 	return true
 }
 
 func (p *Persister) GetUser(email string) *mineuser.MineUser {
-	res := p.get(email)
-	return mineuser.UnMarshalUser([]byte(res))
+	res := p.get("[user]" + email)
+	if res == "(nil)" {
+		return nil
+	}
+	user := mineuser.UnMarshalUser([]byte(res))
+	return user
 }
 
 func (p *Persister) UserExists(email string) bool {
-	res := p.get(email)
+	res := p.get("[user]" + email)
 	return res != "(nil)"
 }
 
@@ -154,6 +158,7 @@ func (p *Persister) set(key, value string) {
 	}
 }
 
+// return 0 if nil
 func (p *Persister) getInt64(key string) int64 {
 	val, err := redis.String(p.conn.Do("GET", key))
 	if err == redis.ErrNil {

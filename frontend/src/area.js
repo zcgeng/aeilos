@@ -95,6 +95,7 @@ export class Area extends React.Component {
     }
   }
 
+  // critical function to send filp message to server
   flipCell(globX, globY) {
     // global x and global y
     let {x, y} = this.glob2local(globX, globY)
@@ -105,11 +106,13 @@ export class Area extends React.Component {
     let touch = new pb.TouchRequest();
     touch.setX(globX);
     touch.setY(globY);
+    touch.setUser(this.props.email);
     touch.setTouchtype(pb.TouchType.FLIP);
     msg.setTouch(touch);
     this.props.socket.send(msg.serializeBinary());
   }
 
+  // critical function to send flag message
   flagCell(globX, globY) {
     // global x and global y
     let {x, y} = this.glob2local(globX, globY)
@@ -120,13 +123,13 @@ export class Area extends React.Component {
     let touch = new pb.TouchRequest();
     touch.setX(globX);
     touch.setY(globY);
+    touch.setUser(this.props.email);
     touch.setTouchtype(pb.TouchType.FLAG);
     msg.setTouch(touch);
     this.props.socket.send(msg.serializeBinary());
   }
 
   handleDoubleClick(globX, globY, e) {
-    console.log("doubleclick")
     // global x and global y
     this.handleSimulClick(globX, globY);
   }

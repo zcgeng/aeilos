@@ -2,6 +2,7 @@ package minemap
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	pb "github.com/zcgeng/aeilos/pb"
@@ -24,9 +25,12 @@ type MineMap struct {
 }
 
 // NewMineMap ...
-func NewMineMap(persis *Persister) *MineMap {
+func NewMineMap() *MineMap {
 	m := new(MineMap)
-	m.persister = persis
+	m.persister = NewPersister(
+		os.Getenv("REDIS_ADDRESS"),
+		os.Getenv("REDIS_PASSWORD"),
+	)
 	m.areas = make(map[string]*MineArea)
 
 	return m
