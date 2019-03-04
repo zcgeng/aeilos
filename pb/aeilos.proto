@@ -73,6 +73,8 @@ message EmailPswd {
 	string password = 2;
 }
 
+message GetChatHistory {}
+
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;
@@ -80,6 +82,7 @@ message ClientToServer {
 		GetStats getStats = 3;
 		ChatMsg chatMsg = 4;
 		EmailPswd login = 5;
+		GetChatHistory getChatHistory = 6;
 	}
 }
 

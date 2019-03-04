@@ -21,7 +21,7 @@ class ScoreBoard extends React.Component {
         </div>
 
         <div className="login">
-          <input placeholder="Email" onChange={this.props.onUsernameChange}/>
+          <input placeholder="Email" type="email" onChange={this.props.onUsernameChange}/>
           <input placeholder="Password" type="password" onChange={this.props.onPasswdChange}/>
           <button onClick={this.props.onLogin}> Login </button>
         </div>
@@ -33,8 +33,8 @@ class ScoreBoard extends React.Component {
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,
@@ -49,6 +49,8 @@ export class Aeilos extends React.Component {
       email: 'user1',
     };
 
+    var that = this;
+
     socket.addEventListener('open', (event)=>{
       let msg = new pb.ClientToServer();
       let xy = new pb.XY();
@@ -62,9 +64,13 @@ export class Aeilos extends React.Component {
       getStats.setUsername(this.state.email);
       msgGetStats.setGetstats(getStats);
       socket.send(msgGetStats.serializeBinary());
-    });
 
-    var that = this;
+      if (that.state.chatData.length === 0) {
+        let msgGetChat = new pb.ClientToServer();
+        msgGetChat.setGetchathistory(new pb.GetChatHistory());
+        socket.send(msgGetChat.serializeBinary());
+      }
+    });
 
     socket.addEventListener('message', function (event) {
       var blob = event.data;

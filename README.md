@@ -3,14 +3,12 @@
 ## Tasks
 
 - Feature
-	- User register/login
-	- Score of each user
+	- Ranking
 	- Punishment of minus-zero
 	- DIY flag
 	- Own an area
 - Front
 	- area size
-	- Chatroom refresh bug
 	- MiniMap
 	- Adjust onWheel
 	- Frontend beautify
@@ -18,8 +16,6 @@
 - Back
 	- Refine updateZeros() // because it might be slow
 	- Record user current area and Stop global broadcasting
-
-
 
 
 ## How to Build
