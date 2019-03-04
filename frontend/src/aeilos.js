@@ -16,6 +16,7 @@ class ScoreBoard extends React.Component {
 
         <div>
           Logged in as: {this.props.email}
+          <a href="/aeilos/register.html">Click to register</a>
         </div>
 
         <div className="login">
@@ -31,8 +32,8 @@ class ScoreBoard extends React.Component {
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
+    // const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,

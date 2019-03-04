@@ -46,12 +46,12 @@ func (s *MineServer) Start() {
 	// Configure websocket route
 	http.HandleFunc("/ws/", s.handleConnections)
 
-	// handle user register or login
+	// handle user register
 	http.HandleFunc("/aeilos/register", s.handleRegister)
 
 	// start a file server
 	fs := http.FileServer(http.Dir("www/"))
-	http.Handle("/", http.StripPrefix("/", fs))
+	http.Handle("/aeilos/", http.StripPrefix("/aeilos/", fs))
 
 	// start a thread to response to clients
 	go s.handleResponses()
@@ -67,6 +67,7 @@ func (s *MineServer) Start() {
 func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", 405)
+		return
 	}
 	if err := r.ParseForm(); err != nil {
 		fmt.Fprintf(w, "ParseForm() err: %v", err)
@@ -76,6 +77,7 @@ func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	username := r.FormValue("username")
 	password := r.FormValue("password")
+	fmt.Printf("on register: %v, %v\n", email, username)
 
 	u := &mineuser.MineUser{}
 	u.Email = email
@@ -84,7 +86,7 @@ func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	res := s.persister.NewUser(u)
 	if res {
-		fmt.Fprintf(w, "Success!\n")
+		fmt.Fprintf(w, "Success!\nPlease go back to login")
 	} else {
 		fmt.Fprintf(w, "Failed: email already exists\n")
 	}
