@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gomodule/redigo/redis"
+	"github.com/zcgeng/aeilos/mineuser"
 	"github.com/zcgeng/aeilos/pb"
 )
 
@@ -94,6 +95,24 @@ func (p *Persister) GetChatMsg(start, stop int) []*pb.ChatMsg {
 		res = append(res, &msg)
 	}
 	return res
+}
+
+func (p *Persister) NewUser(user *mineuser.MineUser) bool {
+	if p.UserExists(user.Email) {
+		return false
+	}
+	p.set(user.Email, "[user]"+user.ToString())
+	return true
+}
+
+func (p *Persister) GetUser(email string) *mineuser.MineUser {
+	res := p.get(email)
+	return mineuser.UnMarshalUser([]byte(res))
+}
+
+func (p *Persister) UserExists(email string) bool {
+	res := p.get(email)
+	return res != "(nil)"
 }
 
 // -------------------- method abstractions ----------------

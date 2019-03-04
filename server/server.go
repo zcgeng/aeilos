@@ -11,12 +11,13 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"github.com/zcgeng/aeilos/minemap"
+	"github.com/zcgeng/aeilos/mineuser"
 	"github.com/zcgeng/aeilos/pb"
 )
 
 // MineServer ...
 type MineServer struct {
-	mmap      *minemap.MineMap
+	mmap      *minemap.MMapThread
 	clients   map[*websocket.Conn]bool
 	upgrader  websocket.Upgrader
 	persister *minemap.Persister
@@ -29,7 +30,7 @@ func NewMineServer() *MineServer {
 		os.Getenv("REDIS_ADDRESS"),
 		os.Getenv("REDIS_PASSWORD"),
 	)
-	ms.mmap = minemap.NewMineMap(ms.persister)
+	ms.mmap = minemap.NewMMapThread(ms.persister)
 	ms.clients = make(map[*websocket.Conn]bool)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -45,6 +46,9 @@ func (s *MineServer) Start() {
 	// Configure websocket route
 	http.HandleFunc("/ws/", s.handleConnections)
 
+	// handle user register or login
+	http.HandleFunc("/aeilos/register", s.handleRegister)
+
 	// start a file server
 	fs := http.FileServer(http.Dir("www/"))
 	http.Handle("/", http.StripPrefix("/", fs))
@@ -57,6 +61,32 @@ func (s *MineServer) Start() {
 	err := http.ListenAndServe("127.0.0.1:8000", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", 405)
+	}
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+
+	email := r.FormValue("email")
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	u := &mineuser.MineUser{}
+	u.Email = email
+	u.UserName = username
+	u.Password = password
+
+	res := s.persister.NewUser(u)
+	if res {
+		fmt.Fprintf(w, "Success!\n")
+	} else {
+		fmt.Fprintf(w, "Failed: email already exists\n")
 	}
 }
 

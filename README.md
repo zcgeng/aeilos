@@ -8,8 +8,9 @@
 	- Punishment of minus-zero
 	- DIY flag
 	- Own an area
-	- Chat
 - Front
+	- area size
+	- Chatroom refresh bug
 	- MiniMap
 	- Adjust onWheel
 	- Frontend beautify

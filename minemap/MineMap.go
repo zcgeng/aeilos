@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/gorilla/websocket"
 	pb "github.com/zcgeng/aeilos/pb"
 )
 
@@ -20,33 +19,16 @@ const (
 
 // MineMap ...
 type MineMap struct {
-	areas    map[string]*MineArea
-	CCommand chan *ServerToMMap
-	CReply   chan *MMapToServer
-
+	areas     map[string]*MineArea
 	persister *Persister
-}
-
-type ServerToMMap struct {
-	Cmd    *pb.ClientToServer
-	Client *websocket.Conn
-}
-
-type MMapToServer struct {
-	Reply  *pb.ServerToClient
-	Client *websocket.Conn
-	Bcast  bool
 }
 
 // NewMineMap ...
 func NewMineMap(persis *Persister) *MineMap {
 	m := new(MineMap)
-	m.areas = make(map[string]*MineArea)
-	m.CCommand = make(chan *ServerToMMap, 1000)
-	m.CReply = make(chan *MMapToServer, 1000)
 	m.persister = persis
+	m.areas = make(map[string]*MineArea)
 
-	m.run()
 	return m
 }
 
@@ -115,12 +97,12 @@ func (m *MineMap) PutBlock(x, y int, b *MineBlock) {
 
 // starts from a zero point, DFS all zeros and broadcast
 // returns cumulative scores: 0 for zeros, 1 for each numbered cell
-func (m *MineMap) ExploreZeros(x, y int) int {
+func (m *MineMap) ExploreZeros(x, y int) (int, []*pb.ServerToClient) {
 	score := 0
 	b := m.GetBlock(x, y)
 
 	if b.Status != hidden {
-		return score
+		return score, make([]*pb.ServerToClient, 0)
 	}
 
 	if b.Value == 11 {
@@ -132,32 +114,33 @@ func (m *MineMap) ExploreZeros(x, y int) int {
 		score += SCORE_RIGHT_FLIP
 	}
 
-	reply := &MMapToServer{
-		Reply: &pb.ServerToClient{
-			Response: &pb.ServerToClient_Update{
-				Update: m.getCellPB(int64(x), int64(y)),
-			},
+	updates := make([]*pb.ServerToClient, 0)
+	reply := &pb.ServerToClient{
+		Response: &pb.ServerToClient_Update{
+			Update: m.getCellPB(int64(x), int64(y)),
 		},
-		Client: nil, // TODO: use pb.UpdateZeros
-		Bcast:  true,
 	}
-	m.CReply <- reply
+
+	updates = append(updates, reply)
 
 	if b.Value == 0 {
 		for i := -1; i < 2; i++ {
 			for j := -1; j < 2; j++ {
-				score += m.ExploreZeros(x+i, y+j)
+				score1, updates1 := m.ExploreZeros(x+i, y+j)
+				score += score1
+				updates = append(updates, updates1...)
 			}
 		}
 	}
-	return score
+	return score, updates
 }
 
 // ShowBlock returns the score that the player got
-func (m *MineMap) ShowBlock(x, y int) int {
+func (m *MineMap) ShowBlock(x, y int) (int, []*pb.ServerToClient) {
+	updates := make([]*pb.ServerToClient, 0)
 	b := m.GetBlock(x, y)
 	if b.Status != hidden {
-		return 0
+		return 0, updates
 	}
 
 	if b.Value == 11 {
@@ -166,19 +149,21 @@ func (m *MineMap) ShowBlock(x, y int) int {
 
 	score := 0
 	if b.Value == 0 {
-		score += m.ExploreZeros(x, y)
+		score1, updates1 := m.ExploreZeros(x, y)
+		score += score1
+		updates = append(updates, updates1...)
 	}
 	b.Status = show
 	switch b.Value {
 	case 0:
-		return score
+		return score, updates
 	case 9:
-		return SCORE_WRONG_FLIP
+		return SCORE_WRONG_FLIP, updates
 	case 11:
 		fmt.Println("impossible!! code:24u89kejnw9")
-		return 0
+		return 0, updates
 	default:
-		return score + SCORE_RIGHT_FLIP
+		return score + SCORE_RIGHT_FLIP, updates
 	}
 }
 
@@ -273,94 +258,4 @@ func (m *MineMap) getCellPB(x, y int64) *pb.Cell {
 		ret.CellType = nil
 	}
 	return ret
-}
-
-func (m *MineMap) handleTouchRequest(v *pb.ClientToServer_Touch) *pb.ServerToClient {
-	var score int
-	if v.Touch.GetTouchType() == pb.TouchType_FLAG {
-		score = m.putFlag(int(v.Touch.GetX()), int(v.Touch.GetY()), "")
-	} else if v.Touch.GetTouchType() == pb.TouchType_FLIP {
-		score = m.ShowBlock(int(v.Touch.GetX()), int(v.Touch.GetY()))
-	}
-
-	resp := &pb.ServerToClient_Touch{Touch: &pb.TouchResponse{
-		Score: int32(score),
-		Cell:  m.getCellPB(v.Touch.GetX(), v.Touch.GetY()),
-	}}
-
-	return &pb.ServerToClient{Response: resp}
-}
-
-func (m *MineMap) handleGetAreaRequest(v *pb.ClientToServer_GetArea) *pb.ServerToClient {
-	area := &pb.Area{
-		X:     v.GetArea.GetX(),
-		Y:     v.GetArea.GetY(),
-		Cells: make([]*pb.Cell, 0),
-	}
-
-	for xx := int64(0); xx < ROW_HEIGHT; xx++ {
-		for yy := int64(0); yy < ROW_LENGTH; yy++ {
-			area.Cells = append(area.Cells, m.getCellPB(xx+v.GetArea.GetX(), yy+v.GetArea.GetY()))
-		}
-	}
-
-	return &pb.ServerToClient{Response: &pb.ServerToClient_Area{Area: area}}
-}
-
-func (m *MineMap) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
-
-	user := v.GetStats.GetUserName()
-
-	stats := &pb.Stats{
-		UserName: user,
-		Score:    m.persister.GetScore(user),
-	}
-
-	return &pb.ServerToClient{Response: &pb.ServerToClient_Stats{Stats: stats}}
-}
-
-func (m *MineMap) operationLoop() {
-	fmt.Println("MineMap: operation loop begins")
-	for {
-		select {
-		case msg := <-m.CCommand:
-			cmd := msg.Cmd
-
-			reply := &MMapToServer{
-				Reply:  nil,
-				Client: msg.Client,
-				Bcast:  false,
-			}
-
-			switch v := cmd.GetRequest().(type) {
-
-			case *pb.ClientToServer_Touch:
-				fmt.Printf("received Touch request: %v\n", v)
-				reply.Reply = m.handleTouchRequest(v)
-				reply.Bcast = true
-				m.persister.AddScore("user1", int(reply.Reply.GetTouch().GetScore()))
-
-			case *pb.ClientToServer_GetArea:
-				// fmt.Printf("received GetArea request: %v\n", v)
-				reply.Reply = m.handleGetAreaRequest(v)
-				reply.Bcast = false
-
-			case *pb.ClientToServer_GetStats:
-				fmt.Printf("received GetStats request: %v\n", v)
-				reply.Reply = m.handleGetStatsRequest(v)
-				reply.Bcast = false
-
-			default:
-				fmt.Printf("wrong type of request: %v\n", v)
-			}
-			m.CReply <- reply
-
-		case <-m.persister.pTicker.C:
-			m.PersistAreaCache(false)
-		}
-	}
-}
-
-func (m *MineMap) run() {
-	go m.operationLoop()
 }
