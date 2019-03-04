@@ -63,11 +63,19 @@ func (p *Persister) LoadArea(key string) *MineArea {
 }
 
 func (p *Persister) GetScore(user string) int64 {
-	return p.getInt64("[score]" + user)
+	return p.zscore("score", user)
 }
 
 func (p *Persister) AddScore(user string, score int) {
-	p.incrby("[score]"+user, score)
+	p.zincrby("score", user, score)
+}
+
+func (p *Persister) GetRank(user string) int {
+	return int(p.zrevrank("score", user)) + 1
+}
+
+func (p *Persister) GetTopScores(length int) ([]string, []int) {
+	return p.zrevrange("score", 0, length)
 }
 
 func (p *Persister) RecordByIP(ip string, value string) {
@@ -120,6 +128,68 @@ func (p *Persister) UserExists(email string) bool {
 }
 
 // -------------------- method abstractions ----------------
+
+func (p *Persister) zincrby(setname string, key string, value int) {
+	_, err := p.conn.Do("ZINCRBY", setname, value, key)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// return 0 if nil
+func (p *Persister) zscore(setname string, key string) int64 {
+	val, err := redis.String(p.conn.Do("ZSCORE", setname, key))
+	if err == redis.ErrNil {
+		return 0
+	} else if err != nil {
+		panic(err)
+	}
+
+	valInt, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		log.Fatalf("parseInt failed: %v, %v\n", val, err)
+	}
+	return valInt
+}
+
+func (p *Persister) zrevrange(setname string, start int, stop int) ([]string, []int) {
+	val, err := redis.Strings(p.conn.Do("ZREVRANGE", setname, start, stop, "WITHSCORES"))
+	if err != nil {
+		panic(err)
+	}
+
+	users := make([]string, 0)
+	scores := make([]int, 0)
+	for i, str := range val {
+		if i%2 == 0 {
+			// username
+			users = append(users, str)
+		} else {
+			// score
+			scoreInt, err := strconv.ParseInt(str, 10, 64)
+			if err != nil {
+				log.Fatalf("parseInt failed: %v, %v\n", str, err)
+			}
+			scores = append(scores, int(scoreInt))
+		}
+	}
+	return users, scores
+}
+
+func (p *Persister) zrevrank(setname string, key string) int64 {
+	val, err := redis.String(p.conn.Do("ZREVRANK", setname, key))
+	if err == redis.ErrNil {
+		return 0
+	} else if err != nil {
+		panic(err)
+	}
+
+	valInt, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		log.Fatalf("parseInt failed: %v, %v\n", val, err)
+	}
+	return valInt
+}
 
 func (p *Persister) incrby(key string, value int) {
 	// fmt.Printf("incrby %v %v\n", key, value)

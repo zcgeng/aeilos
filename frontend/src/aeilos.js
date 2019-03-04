@@ -16,6 +16,7 @@ class ScoreBoard extends React.Component {
 
         <div>
           Logged in as: {this.props.email}
+          <br/>
           <a href="/aeilos/register.html">Click to register</a>
         </div>
 
