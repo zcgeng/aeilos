@@ -22,7 +22,7 @@ class ScoreBoard extends React.Component {
 
         <div className="login">
           <input placeholder="Email" type="email" onChange={this.props.onUsernameChange}/>
-          <input placeholder="Password" type="password" onChange={this.props.onPasswdChange}/>
+          <input placeholder="Password" value={this.props.password} type="password" onChange={this.props.onPasswdChange}/>
           <button onClick={this.props.onLogin}> Login </button>
         </div>
       </div>
@@ -47,6 +47,7 @@ export class Aeilos extends React.Component {
       inputemail: '',
       inputpassword: '',
       email: 'user1',
+      nickName: 'user1',
     };
 
     var that = this;
@@ -137,6 +138,7 @@ export class Aeilos extends React.Component {
               let stats = response.getStats();
               that.setState({
                 email: stats.getUsername(),
+                nickName: stats.getNickname(),
                 score: stats.getScore(),
                 // userName: stats.getUsername(),
               })
@@ -263,6 +265,7 @@ export class Aeilos extends React.Component {
     let msg = new pb.ClientToServer();
     let chatMsg = new pb.ChatMsg();
     chatMsg.setUsername(this.state.email);
+    chatMsg.setNickname(this.state.nickName);
     chatMsg.setMsg(this.state.chatMsg);
     chatMsg.setTime(new Date().getTime());
     msg.setChatmsg(chatMsg);
@@ -287,6 +290,7 @@ export class Aeilos extends React.Component {
     login.setPassword(this.state.inputpassword);
     msg.setLogin(login);
     this.state.socket.send(msg.serializeBinary());
+    this.setState({inputpassword: ""});
   }
 
   render() {
@@ -302,6 +306,7 @@ export class Aeilos extends React.Component {
           <ScoreBoard 
             score={this.state.score}
             email={this.state.email}
+            password={this.state.inputpassword}
             onLogin={this.handleLogin.bind(this)}
             onUsernameChange={this.recordEmail.bind(this)}
             onPasswdChange={this.recordPassword.bind(this)}

@@ -93,14 +93,20 @@ func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *MineServer) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
-	user := v.GetStats.GetUserName()
-	return m.handleGetStats(user)
+	email := v.GetStats.GetUserName()
+	return m.handleGetStats(email)
 }
 
-func (m *MineServer) handleGetStats(user string) *pb.ServerToClient {
+func (m *MineServer) handleGetStats(email string) *pb.ServerToClient {
+	fmt.Printf("user: %v\n", m.persister.GetUser(email))
+	user := m.persister.GetUser(email)
+	if user == nil {
+		panic("user doesn't exist in the db: " + email)
+	}
 	stats := &pb.Stats{
-		UserName: user,
-		Score:    m.persister.GetScore(user),
+		UserName: email,
+		NickName: m.persister.GetUser(email).UserName,
+		Score:    m.persister.GetScore(email),
 	}
 
 	return &pb.ServerToClient{Response: &pb.ServerToClient_Stats{Stats: stats}}
@@ -186,6 +192,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 				rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: &pb.ChatMsg{
 					Msg:      "User doesn't exist or wrong password",
 					UserName: "System",
+					NickName: "System",
 					Time:     time.Now().Unix(),
 				}}}
 				reply := &minemap.MMapToServer{
@@ -200,6 +207,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: &pb.ChatMsg{
 				Msg:      "Login success!",
 				UserName: "System",
+				NickName: "System",
 				Time:     time.Now().Unix(),
 			}}}
 			reply := &minemap.MMapToServer{

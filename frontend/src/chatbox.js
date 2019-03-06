@@ -17,7 +17,7 @@ export class ChatBox extends React.Component {
     return data.map((s, i)=>{
       return(<p className='chatmsg' key={i}>
         <font size="1" color="green">[{new Date(s.getTime()).toLocaleTimeString()}]</font>
-        <font color="blue">{s.getUsername()}: </font>
+        <font color="blue">{s.getNickname()}: </font>
         {s.getMsg()}
         </p>);
     });

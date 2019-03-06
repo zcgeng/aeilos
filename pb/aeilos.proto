@@ -60,12 +60,14 @@ message GetStats {
 message Stats {
 	string userName = 1;
 	int64 score = 2;
+	string nickName = 3;
 }
 
 message ChatMsg {
 	string userName = 1;
 	string msg = 2;
 	int64 time = 3;
+	string nickName = 4;
 }
 
 message EmailPswd {
