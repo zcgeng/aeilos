@@ -1,4 +1,4 @@
-# aeilos -- an online multi player mineswipper!
+# aeilos -- an online multi player minesweeper!
 
 ## Tasks
 
