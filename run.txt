@@ -12,3 +12,4 @@ environment=SECRET_PASSPHRASE='this is secret',SECRET_TWO='another secret'
 $ sudo mkdir /var/log/webhook
 $ supervisorctl reread
 $ supervisorctl update
+$ docker run --name some-redis -p 7001:6379 -v $HOME/aeilos/redis/:/data -d redis redis-server --appendonly yes

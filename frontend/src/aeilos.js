@@ -46,8 +46,8 @@ export class Aeilos extends React.Component {
       chatMsg: '',
       inputemail: '',
       inputpassword: '',
-      email: 'user1',
-      nickName: 'user1',
+      email: '',
+      nickName: '',
     };
 
     var that = this;

@@ -18,7 +18,7 @@ import (
 // MineServer ...
 type MineServer struct {
 	mmap      *minemap.MMapThread
-	clients   map[*websocket.Conn]bool
+	clients   map[*websocket.Conn]string // map Connections to emails
 	upgrader  websocket.Upgrader
 	persister *minemap.Persister
 }
@@ -31,7 +31,7 @@ func NewMineServer() *MineServer {
 		os.Getenv("REDIS_PASSWORD"),
 	)
 	ms.mmap = minemap.NewMMapThread()
-	ms.clients = make(map[*websocket.Conn]bool)
+	ms.clients = make(map[*websocket.Conn]string)
 	ms.upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -92,21 +92,21 @@ func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *MineServer) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
+func (s *MineServer) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
 	email := v.GetStats.GetUserName()
-	return m.handleGetStats(email)
+	return s.handleGetStats(email)
 }
 
-func (m *MineServer) handleGetStats(email string) *pb.ServerToClient {
-	fmt.Printf("user: %v\n", m.persister.GetUser(email))
-	user := m.persister.GetUser(email)
+func (s *MineServer) handleGetStats(email string) *pb.ServerToClient {
+	fmt.Printf("user: %v\n", s.persister.GetUser(email))
+	user := s.persister.GetUser(email)
 	if user == nil {
 		panic("user doesn't exist in the db: " + email)
 	}
 	stats := &pb.Stats{
 		UserName: email,
-		NickName: m.persister.GetUser(email).UserName,
-		Score:    m.persister.GetScore(email),
+		NickName: s.persister.GetUser(email).UserName,
+		Score:    s.persister.GetScore(email),
 	}
 
 	return &pb.ServerToClient{Response: &pb.ServerToClient_Stats{Stats: stats}}
@@ -125,8 +125,8 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("on connection: %v %v\n",
 		strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
-	// Register our new client
-	s.clients[ws] = true
+	// Register our new client, empty string means un-logined
+	s.clients[ws] = ""
 
 	s.persister.RecordByIP(strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
@@ -152,6 +152,16 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 		switch v := msg.GetRequest().(type) {
 		case *pb.ClientToServer_ChatMsg:
 			fmt.Printf("received chat message: %v\n", v.ChatMsg.Msg)
+
+			if s.clients[ws] == "" || s.clients[ws] != v.ChatMsg.UserName { // check login status
+				reply := &minemap.MMapToServer{
+					Reply:  genServerMessage("Please login first"),
+					Client: ws,
+					Bcast:  true,
+				}
+				s.mmap.CReply <- reply
+				break
+			}
 			s.persister.RecordChatMsg(v.ChatMsg)
 			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: v.ChatMsg}}
 			reply := &minemap.MMapToServer{
@@ -163,6 +173,15 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 		case *pb.ClientToServer_GetStats:
 			fmt.Printf("received GetStats request: %v\n", v)
+			if s.clients[ws] == "" || s.clients[ws] != v.GetStats.UserName { // check login status
+				reply := &minemap.MMapToServer{
+					Reply:  genServerMessage("Please login first"),
+					Client: ws,
+					Bcast:  true,
+				}
+				s.mmap.CReply <- reply
+				break
+			}
 			reply := &minemap.MMapToServer{
 				Reply:  s.handleGetStatsRequest(v),
 				Client: ws,
@@ -204,25 +223,40 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 
-			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: &pb.ChatMsg{
-				Msg:      "Login success!",
-				UserName: "System",
-				NickName: "System",
-				Time:     time.Now().Unix(),
-			}}}
+			s.clients[ws] = v.Login.Email // record this connection as logged in
+
+			// reply login success message
 			reply := &minemap.MMapToServer{
-				Reply:  rpl,
+				Reply:  genServerMessage("Login success!"),
 				Client: ws,
 				Bcast:  false,
 			}
 			s.mmap.CReply <- reply
 
+			// send back user stats
 			reply = &minemap.MMapToServer{
 				Reply:  s.handleGetStats(user.Email),
 				Client: ws,
 				Bcast:  false,
 			}
 			s.mmap.CReply <- reply
+
+		case *pb.ClientToServer_Touch:
+			if s.clients[ws] == "" || s.clients[ws] != v.Touch.GetUser() { // check login status
+				reply := &minemap.MMapToServer{
+					Reply:  genServerMessage("Please login first"),
+					Client: ws,
+					Bcast:  true,
+				}
+				s.mmap.CReply <- reply
+				break
+			}
+			// hand it over to minemap thread
+			cmd := &minemap.ServerToMMap{
+				Cmd:    &msg,
+				Client: ws,
+			}
+			s.mmap.CCommand <- cmd
 
 		default:
 			// Send the newly received message to mine engine
