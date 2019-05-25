@@ -164,6 +164,18 @@ export class Aeilos extends React.Component {
     />)
   }
 
+  handleKeyPress(e) {
+    if (e.key === 'w') {
+      this.handleMoveMap(0);
+    } else if(e.key === 's'){
+      this.handleMoveMap(1);
+    } else if (e.key === 'a') {
+      this.handleMoveMap(2);
+    } else if (e.key === 'd') {
+      this.handleMoveMap(3);
+    }
+  }
+
   handleWheel(e) {
 
     const thisWheel = new Date().getTime();
@@ -297,7 +309,7 @@ export class Aeilos extends React.Component {
     return (
       <div className="aeilos">
         <div className="area-container">
-        <div className="area" onWheel={(e)=>{e.preventDefault();this.handleWheel(e);}}>
+        <div className="area" onWheel={(e)=>{e.preventDefault();this.handleWheel(e);}} onKeyPress={(e)=>{e.preventDefault();this.handleKeyPress(e);}}>
           {this.renderArea()}
         </div>
         </div>
@@ -336,6 +348,9 @@ export class Aeilos extends React.Component {
             }}>
               ➡
             </button>
+            <div>
+              Use WASD to move around.
+            </div>
             <div>
               Jump to:
               <input className="inputcoord" type="number" value={this.state.x} onChange={this.handleCoordX.bind(this)} />
