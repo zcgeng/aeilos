@@ -77,6 +77,19 @@ message EmailPswd {
 
 message GetChatHistory {}
 
+message Empty {}
+
+message RankInfo{
+	string nickName = 1;
+	int64 score = 2;
+	int64 rank = 3;
+}
+
+// get top 10 players and my info
+message LeaderBoard{
+	repeated RankInfo ranklist= 1; 
+}
+
 message ClientToServer {
 	oneof request {
 		TouchRequest touch = 1;
@@ -85,6 +98,7 @@ message ClientToServer {
 		ChatMsg chatMsg = 4;
 		EmailPswd login = 5;
 		GetChatHistory getChatHistory = 6;
+		Empty getLeaderBoard = 7;
 	}
 }
 
@@ -96,5 +110,6 @@ message ServerToClient {
 		Zeros updateZeros = 4;
 		ChatMsg msg = 5;
 		Stats stats = 6;
+		LeaderBoard leaderBoard = 7;
 	}
 }

@@ -258,6 +258,40 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			}
 			s.mmap.CCommand <- cmd
 
+		case *pb.ClientToServer_GetLeaderBoard:
+			fmt.Printf("received getLeaderBoard\n")
+
+			ranklist := make([]*pb.RankInfo, 0)
+			// get top 10 players
+			names, scores := s.persister.GetTopScores(10)
+			for i, name := range names {
+				ranklist = append(ranklist, &pb.RankInfo{
+					NickName: s.persister.GetUser(name).UserName,
+					Score:    int64(scores[i]),
+					Rank:     int64(i + 1),
+				})
+			}
+			// add the user's rank to the end of the list
+			if s.clients[ws] != "" {
+				myemail := s.clients[ws]
+				ranklist = append(ranklist, &pb.RankInfo{
+					NickName: s.persister.GetUser(myemail).UserName,
+					Score:    int64(s.persister.GetScore(myemail)),
+					Rank:     int64(s.persister.GetRank(myemail)),
+				})
+			}
+
+			// generate reply
+			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_LeaderBoard{LeaderBoard: &pb.LeaderBoard{
+				Ranklist: ranklist,
+			}}}
+			reply := &minemap.MMapToServer{
+				Reply:  rpl,
+				Client: ws,
+				Bcast:  false,
+			}
+			s.mmap.CReply <- reply
+
 		default:
 			// Send the newly received message to mine engine
 			cmd := &minemap.ServerToMMap{

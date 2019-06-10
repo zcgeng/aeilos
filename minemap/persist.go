@@ -177,18 +177,13 @@ func (p *Persister) zrevrange(setname string, start int, stop int) ([]string, []
 }
 
 func (p *Persister) zrevrank(setname string, key string) int64 {
-	val, err := redis.String(p.conn.Do("ZREVRANK", setname, key))
+	val, err := redis.Int(p.conn.Do("ZREVRANK", setname, key))
 	if err == redis.ErrNil {
 		return 0
 	} else if err != nil {
 		panic(err)
 	}
-
-	valInt, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		log.Fatalf("parseInt failed: %v, %v\n", val, err)
-	}
-	return valInt
+	return int64(val)
 }
 
 func (p *Persister) incrby(key string, value int) {

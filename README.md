@@ -2,8 +2,10 @@
 
 ## Tasks
 
+- Bugs
+  - Cannot Save Login
+  - LeaderBoard css style
 - Feature
-  - Ranking
   - Punishment of minus-zero
   - DIY flag
   - Own an area

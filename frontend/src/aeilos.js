@@ -7,23 +7,50 @@ import './index.css';
 const pb = require('./aeilos_pb');
 
 class ScoreBoard extends React.Component {
+  renderLeaderBoard() {
+    return (
+      <div>
+        your score: {this.props.score}
+        <table>
+        <tbody>
+        {this.props.leaderBoard.map((rankLine, i)=>{
+          return (
+            <tr key={i}>
+              <td>
+                #{rankLine.rank}
+              </td>
+              <td>
+                {rankLine.nickName}
+              </td>
+              <td>
+                {rankLine.score}
+              </td>
+            </tr>
+          )
+        })}
+        </tbody>
+        </table>
+      </div>
+    )
+  }
+
   render() {
     return (
       <div>
         <div className="scoreboard">
-          {this.props.score}
-        </div>
-
-        <div>
-          Logged in as: {this.props.email}
-          <br/>
-          <a href="/aeilos/register.html">Click to register</a>
+          {this.renderLeaderBoard()}
         </div>
 
         <div className="login">
           <input placeholder="Email" type="email" onChange={this.props.onUsernameChange}/>
           <input placeholder="Password" value={this.props.password} type="password" onChange={this.props.onPasswdChange}/>
           <button onClick={this.props.onLogin}> Login </button>
+        </div>
+
+        <div>
+          Logged in as: {this.props.email}
+          <br />
+          <a href="/aeilos/register.html">Click to register</a>
         </div>
       </div>
     );
@@ -48,6 +75,7 @@ export class Aeilos extends React.Component {
       inputpassword: '',
       email: '',
       nickName: '',
+      leaderBoard: [],
     };
 
     var that = this;
@@ -60,11 +88,22 @@ export class Aeilos extends React.Component {
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
 
+      // send GetStatus message first
       let msgGetStats = new pb.ClientToServer();
       let getStats = new pb.GetStats();
       getStats.setUsername(this.state.email);
       msgGetStats.setGetstats(getStats);
       socket.send(msgGetStats.serializeBinary());
+
+      // send GetLeaderBoard message
+      function sendGetLeaderBoard() {
+        let msgGetLB = new pb.ClientToServer();
+        let getLB = new pb.Empty();
+        msgGetLB.setGetleaderboard(getLB);
+        socket.send(msgGetLB.serializeBinary());
+      }
+      sendGetLeaderBoard();
+      setInterval(sendGetLeaderBoard, 5000);
 
       if (that.state.chatData.length === 0) {
         let msgGetChat = new pb.ClientToServer();
@@ -143,6 +182,21 @@ export class Aeilos extends React.Component {
                 // userName: stats.getUsername(),
               })
               break;
+
+            case pb.ServerToClient.ResponseCase.LEADERBOARD:
+              let ranklist = response.getLeaderboard().getRanklistList();
+
+              that.setState({
+                leaderBoard: ranklist.map((arr) => {
+                  return {
+                    'nickName': arr.getNickname(),
+                    'score': arr.getScore(),
+                    'rank': arr.getRank(),
+                  };
+                }),
+              })
+              break;
+
             default:
               alert('error: response no type')
           } 
@@ -317,6 +371,7 @@ export class Aeilos extends React.Component {
         <div className="controlplane">
           <ScoreBoard 
             score={this.state.score}
+            leaderBoard={this.state.leaderBoard}
             email={this.state.email}
             password={this.state.inputpassword}
             onLogin={this.handleLogin.bind(this)}

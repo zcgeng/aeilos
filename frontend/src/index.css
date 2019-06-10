@@ -95,8 +95,7 @@ ol, ul {
 }
 
 .scoreboard {
-  font-size: 60px;
-  text-align: center;
+  font-size: 18px;
   display: inline-block;
   background: #ddd;
 }
