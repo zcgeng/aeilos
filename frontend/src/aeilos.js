@@ -404,9 +404,6 @@ export class Aeilos extends React.Component {
               ➡
             </button>
             <div>
-              Use WASD to move around.
-            </div>
-            <div>
               Jump to:
               <input className="inputcoord" type="number" value={this.state.x} onChange={this.handleCoordX.bind(this)} />
               <input className="inputcoord" type="number" value={this.state.y} onChange={this.handleCoordY.bind(this)} />
