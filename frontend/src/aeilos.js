@@ -2,60 +2,11 @@ import React from 'react';
 import ReconnectingWebsocket from 'reconnecting-websocket';
 import { Area } from './area.js'
 import { ChatBox } from './chatbox.js'
+import { RightPanel } from './rightpanel.js'
+import { LeftPanel } from './leftpanel.js'
 import {InsideArea, ROW_LENGTH} from './utils';
 import './index.css';
 const pb = require('./aeilos_pb');
-
-class ScoreBoard extends React.Component {
-  renderLeaderBoard() {
-    return (
-      <div>
-        your score: {this.props.score}
-        <table>
-        <tbody>
-        {this.props.leaderBoard.map((rankLine, i)=>{
-          return (
-            <tr key={i}>
-              <td>
-                #{rankLine.rank}
-              </td>
-              <td>
-                {rankLine.nickName}
-              </td>
-              <td>
-                {rankLine.score}
-              </td>
-            </tr>
-          )
-        })}
-        </tbody>
-        </table>
-      </div>
-    )
-  }
-
-  render() {
-    return (
-      <div>
-        <div className="scoreboard">
-          {this.renderLeaderBoard()}
-        </div>
-
-        <div className="login">
-          <input placeholder="Email" type="email" onChange={this.props.onUsernameChange}/>
-          <input placeholder="Password" value={this.props.password} type="password" onChange={this.props.onPasswdChange}/>
-          <button onClick={this.props.onLogin}> Login </button>
-        </div>
-
-        <div>
-          Logged in as: {this.props.email}
-          <br />
-          <a href="/aeilos/register.html">Click to register</a>
-        </div>
-      </div>
-    );
-  }
-}
 
 export class Aeilos extends React.Component {
   constructor(props) {
@@ -368,10 +319,14 @@ export class Aeilos extends React.Component {
         </div>
         </div>
 
+        <LeftPanel
+          leaderBoard={this.state.leaderBoard}
+          score={this.state.score}
+          isLoggedIn={this.state.email !== ''}
+        />
         <div className="controlplane">
-          <ScoreBoard 
+          <RightPanel 
             score={this.state.score}
-            leaderBoard={this.state.leaderBoard}
             email={this.state.email}
             password={this.state.inputpassword}
             onLogin={this.handleLogin.bind(this)}
