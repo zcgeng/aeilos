@@ -28,7 +28,7 @@ export function getCellClassName(pbcell) {
   let className = 'cell'
   switch(pbcell.getCelltypeCase()) {
     case pb.Cell.CelltypeCase.BOMBS:
-      className += ' cell-number';
+      className += ' cell-number-' + pbcell.getBombs();
       break;
     case pb.Cell.CelltypeCase.UNTOUCHED:
       className += ' cell-untouched';

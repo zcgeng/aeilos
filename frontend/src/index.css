@@ -43,6 +43,31 @@ ol, ul {
   border: 1px solid #ddd;
 }
 
+.cell-number-1 {
+  color: #0000ff;
+}
+.cell-number-2 {
+  color: #008100;
+}
+.cell-number-3 {
+  color: #ff1300;
+}
+.cell-number-4 {
+  color: #000083;
+}
+.cell-number-5 {
+  color: #810500;
+}
+.cell-number-6 {
+  color: #2a9494;
+}
+.cell-number-7 {
+  color: #000000;
+}
+.cell-number-8 {
+  color: #808080;
+}
+
 .cell-untouched {
   height: 100%;
   width: 100%;

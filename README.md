@@ -4,20 +4,28 @@
 
 - Bugs
   - Cannot Save Login
-  - LeaderBoard css style
 - Feature
   - Punishment of minus-zero
   - DIY flag
   - Own an area
-- Front
-  - area size
   - MiniMap
+- Frontend
+  - Frontend redesign
+    - LeaderBoard css style
+    - hide chatbox by animation
+  - area size
   - Adjust onWheel
-  - Frontend beautify
   - Cache areas
-- Back
+- Backend
   - Refine updateZeros() // because it might be slow
   - Record user current area and Stop global broadcasting
+- Done
+  - Left+right click
+  - Persist & load data
+  - User register/login
+  - Score board
+  - Chatbox: send and receive, get history messages
+  - Ranking: get my ranking, leaderboard
 
 ## How to Build
 
