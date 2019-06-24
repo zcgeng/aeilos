@@ -3,6 +3,8 @@ const pb = require('./aeilos_pb');
 export const ROW_LENGTH = 40;
 export const ROW_HEIGHT = 25;
 
+export const AEILOS_AUTH_TOKEN_NAME = "aeilos_token"
+
 export function InsideArea(x, y, ax, ay) {
   return (x >= ax) && (y >= ay) && (x < ax+ROW_HEIGHT) && (y < ay+ROW_LENGTH);
 }
@@ -68,4 +70,9 @@ export function getCellNumber(pbcell) {
     return 0;
   }
   return(pbcell.getBombs());
+}
+
+export function getCookieValue(a) {
+  var b = document.cookie.match('(^|[^;]+)\\s*' + a + '\\s*=\\s*([^;]+)');
+  return b ? b.pop() : '';
 }

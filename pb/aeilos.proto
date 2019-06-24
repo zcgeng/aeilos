@@ -86,8 +86,18 @@ message RankInfo{
 }
 
 // get top 10 players and my info
-message LeaderBoard{
+message LeaderBoard {
 	repeated RankInfo ranklist= 1; 
+}
+
+message LoginResult {
+	bool success = 1;
+	string msg = 2;
+	string token = 3;
+}
+
+message Logout {
+	string token = 1;
 }
 
 message ClientToServer {
@@ -99,6 +109,7 @@ message ClientToServer {
 		EmailPswd login = 5;
 		GetChatHistory getChatHistory = 6;
 		Empty getLeaderBoard = 7;
+		Logout logout = 8;
 	}
 }
 
@@ -111,5 +122,7 @@ message ServerToClient {
 		ChatMsg msg = 5;
 		Stats stats = 6;
 		LeaderBoard leaderBoard = 7;
+		LoginResult loginResult = 8;
+		Empty logoutResult = 9;
 	}
 }

@@ -8,7 +8,7 @@ export class RightPanel extends React.Component {
             return (<div className="login">
                     <input placeholder="Email" type="email" onChange={this.props.onUsernameChange} />
                     <input placeholder="Password" value={this.props.password} type="password" onChange={this.props.onPasswdChange} />
-                    <button onClick={this.props.onLogin}> Login </button>
+                    <button onClick={this.props.onLogin}> Log in </button>
                     <br />
                     <a href="/aeilos/register.html">Click to register</a>
                 </div>)
@@ -22,6 +22,7 @@ export class RightPanel extends React.Component {
                 {this.renderLogin(isLoggedIn)}
                 <div>
                     Logged in as: {this.props.email}
+                    <button onClick={this.props.onLogOut}> Log out </button>
                     
                 </div>
             </div>

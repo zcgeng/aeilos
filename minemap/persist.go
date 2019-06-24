@@ -127,6 +127,22 @@ func (p *Persister) UserExists(email string) bool {
 	return res != "(nil)"
 }
 
+func (p *Persister) CheckAuthToken(token string) string {
+	res := p.get("[token]" + token)
+	if res == "(nil)" {
+		return ""
+	}
+	return res
+}
+
+func (p *Persister) SetAuthToken(token, email string) {
+	p.set("[token]"+token, email)
+}
+
+func (p *Persister) ClearAuthToken(token string) {
+	p.del("[token]" + token)
+}
+
 // -------------------- method abstractions ----------------
 
 func (p *Persister) zincrby(setname string, key string, value int) {
@@ -249,4 +265,12 @@ func (p *Persister) get(key string) string {
 		panic(err)
 	}
 	return val
+}
+
+func (p *Persister) del(key string) bool {
+	val, err := redis.Int(p.conn.Do("del", key))
+	if err != nil {
+		panic(err)
+	}
+	return val == 1
 }

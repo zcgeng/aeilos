@@ -1,6 +1,7 @@
 package server
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/zcgeng/aeilos/pb"
@@ -15,4 +16,15 @@ func genServerMessage(msg string) *pb.ServerToClient {
 	}}}
 
 	return rpl
+}
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+// RandString gives you a random string which has a size of n
+func RandString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	}
+	return string(b)
 }

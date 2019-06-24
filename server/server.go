@@ -92,8 +92,7 @@ func (s *MineServer) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *MineServer) handleGetStatsRequest(v *pb.ClientToServer_GetStats) *pb.ServerToClient {
-	email := v.GetStats.GetUserName()
+func (s *MineServer) handleGetStatsRequest(email string) *pb.ServerToClient {
 	return s.handleGetStats(email)
 }
 
@@ -114,6 +113,11 @@ func (s *MineServer) handleGetStats(email string) *pb.ServerToClient {
 
 func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	// Upgrade initial GET request to a websocket
+	mytoken, _ := r.Cookie("aeilos_token")
+	myemail := s.persister.CheckAuthToken(mytoken.Value)
+	fmt.Println(mytoken.Value)
+	fmt.Println(myemail)
+
 	ws, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -121,12 +125,20 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	// Make sure we close the connection when the function returns
 	defer ws.Close()
-	record := "{login: " + time.Now().Local().String() + "}"
+	record := "{connect: " + time.Now().Local().String() + "}"
 	fmt.Printf("on connection: %v %v\n",
 		strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
 	// Register our new client, empty string means un-logined
-	s.clients[ws] = ""
+	s.clients[ws] = myemail
+	if myemail != "" {
+		reply := &minemap.MMapToServer{
+			Reply:  s.handleGetStatsRequest(myemail),
+			Client: ws,
+			Bcast:  false,
+		}
+		s.mmap.CReply <- reply
+	}
 
 	s.persister.RecordByIP(strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
@@ -183,7 +195,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			reply := &minemap.MMapToServer{
-				Reply:  s.handleGetStatsRequest(v),
+				Reply:  s.handleGetStatsRequest(v.GetStats.GetUserName()),
 				Client: ws,
 				Bcast:  false,
 			}
@@ -208,11 +220,10 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			user := s.persister.GetUser(v.Login.Email)
 
 			if user == nil || v.Login.Password != user.Password {
-				rpl := &pb.ServerToClient{Response: &pb.ServerToClient_Msg{Msg: &pb.ChatMsg{
-					Msg:      "User doesn't exist or wrong password",
-					UserName: "System",
-					NickName: "System",
-					Time:     time.Now().Unix(),
+				rpl := &pb.ServerToClient{Response: &pb.ServerToClient_LoginResult{LoginResult: &pb.LoginResult{
+					Success: false,
+					Msg:     "User doesn't exist or wrong password",
+					Token:   "",
 				}}}
 				reply := &minemap.MMapToServer{
 					Reply:  rpl,
@@ -224,10 +235,17 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			}
 
 			s.clients[ws] = v.Login.Email // record this connection as logged in
+			token := RandString(32)
+			s.persister.SetAuthToken(token, v.Login.Email)
 
 			// reply login success message
+			rpl := &pb.ServerToClient{Response: &pb.ServerToClient_LoginResult{LoginResult: &pb.LoginResult{
+				Success: true,
+				Msg:     "Login Success!",
+				Token:   token,
+			}}}
 			reply := &minemap.MMapToServer{
-				Reply:  genServerMessage("Login success!"),
+				Reply:  rpl,
 				Client: ws,
 				Bcast:  false,
 			}
@@ -236,6 +254,26 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			// send back user stats
 			reply = &minemap.MMapToServer{
 				Reply:  s.handleGetStats(user.Email),
+				Client: ws,
+				Bcast:  false,
+			}
+			s.mmap.CReply <- reply
+
+		case *pb.ClientToServer_Logout:
+			if s.clients[ws] == "" { // check login status
+				reply := &minemap.MMapToServer{
+					Reply:  genServerMessage("you have not logged in"),
+					Client: ws,
+					Bcast:  true,
+				}
+				s.mmap.CReply <- reply
+				break
+			}
+
+			s.clients[ws] = ""
+			s.persister.ClearAuthToken(v.Logout.Token)
+			reply := &minemap.MMapToServer{
+				Reply:  &pb.ServerToClient{Response: &pb.ServerToClient_LogoutResult{LogoutResult: &pb.Empty{}}},
 				Client: ws,
 				Bcast:  false,
 			}
@@ -259,7 +297,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			s.mmap.CCommand <- cmd
 
 		case *pb.ClientToServer_GetLeaderBoard:
-			fmt.Printf("received getLeaderBoard\n")
+			// fmt.Printf("received getLeaderBoard\n")
 
 			ranklist := make([]*pb.RankInfo, 0)
 			// get top 10 players

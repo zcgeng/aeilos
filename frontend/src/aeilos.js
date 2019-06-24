@@ -4,7 +4,7 @@ import { Area } from './area.js'
 import { ChatBox } from './chatbox.js'
 import { RightPanel } from './rightpanel.js'
 import { LeftPanel } from './leftpanel.js'
-import {InsideArea, ROW_LENGTH} from './utils';
+import {InsideArea, ROW_LENGTH, AEILOS_AUTH_TOKEN_NAME, getCookieValue} from './utils';
 import './index.css';
 const pb = require('./aeilos_pb');
 
@@ -12,7 +12,7 @@ export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
     // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/?token=' + getCookieValue(AEILOS_AUTH_TOKEN_NAME));
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,
@@ -147,7 +147,23 @@ export class Aeilos extends React.Component {
                 }),
               })
               break;
-
+            
+            case pb.ServerToClient.ResponseCase.LOGINRESULT:
+              let loginresult = response.getLoginresult();
+              if (loginresult.getSuccess() === true) {
+                document.cookie = AEILOS_AUTH_TOKEN_NAME+"="+loginresult.getToken();
+                alert(loginresult.getMsg());
+              } else {
+                alert(loginresult.getMsg());
+              }
+              break;
+            
+            case pb.ServerToClient.ResponseCase.LOGOUTRESULT:
+              that.setState({
+                email: "",
+              });
+              document.cookie = AEILOS_AUTH_TOKEN_NAME+"=;";
+              break;
             default:
               alert('error: response no type')
           } 
@@ -310,6 +326,14 @@ export class Aeilos extends React.Component {
     this.setState({inputpassword: ""});
   }
 
+  handleLogout(event) {
+    let msg = new pb.ClientToServer();
+    let logout = new pb.Logout();
+    logout.setToken(getCookieValue(AEILOS_AUTH_TOKEN_NAME));
+    msg.setLogout(logout);
+    this.state.socket.send(msg.serializeBinary());
+  }
+
   render() {
     return (
       <div className="aeilos">
@@ -330,6 +354,7 @@ export class Aeilos extends React.Component {
             email={this.state.email}
             password={this.state.inputpassword}
             onLogin={this.handleLogin.bind(this)}
+            onLogOut={this.handleLogout.bind(this)}
             onUsernameChange={this.recordEmail.bind(this)}
             onPasswdChange={this.recordPassword.bind(this)}
           />

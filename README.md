@@ -2,8 +2,6 @@
 
 ## Tasks
 
-- Bugs
-  - Cannot Save Login
 - Feature
   - Punishment of minus-zero
   - DIY flag
@@ -26,6 +24,7 @@
   - Score board
   - Chatbox: send and receive, get history messages
   - Ranking: get my ranking, leaderboard
+  - Save Login status & Logout
 
 ## How to Build
 
