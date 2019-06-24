@@ -5,8 +5,8 @@ export class LeftPanel extends React.Component {
         return (
             <LeaderBoard
                 leaderBoard={this.props.leaderBoard}
-                myrankline={{ 'rank': 0, 'nickName': '', 'score': 0 }}
-                myscore={this.props.score}
+                myrankline={this.props.myrankline}
+                score={this.props.score}
                 isLoggedIn={this.props.isLoggedIn}
             ></LeaderBoard>
         )

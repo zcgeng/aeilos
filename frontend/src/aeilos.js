@@ -348,7 +348,8 @@ export class Aeilos extends React.Component {
         </div>
 
         <LeftPanel
-          leaderBoard={this.state.leaderBoard}
+          leaderBoard={this.state.email === '' ? this.state.leaderBoard : this.state.leaderBoard.slice(0, -1)}
+          myrankline={this.state.email === '' ? '' : (this.state.leaderBoard.length===0 ? '' : this.state.leaderBoard[this.state.leaderBoard.length-1])}
           score={this.state.score}
           isLoggedIn={this.state.email !== ''}
         />
