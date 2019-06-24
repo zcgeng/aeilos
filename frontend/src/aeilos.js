@@ -12,7 +12,7 @@ export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
     // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/?token=' + getCookieValue(AEILOS_AUTH_TOKEN_NAME));
+    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,
@@ -38,6 +38,10 @@ export class Aeilos extends React.Component {
       xy.setY(this.state.y);
       msg.setGetarea(xy);
       socket.send(msg.serializeBinary());
+
+      let msgToken = new pb.ClientToServer();
+      msgToken.setToken(getCookieValue(AEILOS_AUTH_TOKEN_NAME));
+      socket.send(msgToken.serializeBinary());
 
       // send GetStatus message first
       let msgGetStats = new pb.ClientToServer();

@@ -110,6 +110,7 @@ message ClientToServer {
 		GetChatHistory getChatHistory = 6;
 		Empty getLeaderBoard = 7;
 		Logout logout = 8;
+		string token = 9;
 	}
 }
 

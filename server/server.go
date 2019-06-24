@@ -113,10 +113,6 @@ func (s *MineServer) handleGetStats(email string) *pb.ServerToClient {
 
 func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 	// Upgrade initial GET request to a websocket
-	mytoken, _ := r.Cookie("aeilos_token")
-	myemail := s.persister.CheckAuthToken(mytoken.Value)
-	fmt.Println(mytoken.Value)
-	fmt.Println(myemail)
 
 	ws, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -130,15 +126,7 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 		strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
 	// Register our new client, empty string means un-logined
-	s.clients[ws] = myemail
-	if myemail != "" {
-		reply := &minemap.MMapToServer{
-			Reply:  s.handleGetStatsRequest(myemail),
-			Client: ws,
-			Bcast:  false,
-		}
-		s.mmap.CReply <- reply
-	}
+	s.clients[ws] = ""
 
 	s.persister.RecordByIP(strings.Split(ws.RemoteAddr().String(), ":")[0], record)
 
@@ -254,6 +242,18 @@ func (s *MineServer) handleConnections(w http.ResponseWriter, r *http.Request) {
 			// send back user stats
 			reply = &minemap.MMapToServer{
 				Reply:  s.handleGetStats(user.Email),
+				Client: ws,
+				Bcast:  false,
+			}
+			s.mmap.CReply <- reply
+
+		case *pb.ClientToServer_Token:
+			fmt.Printf("received token: %v\n", v.Token)
+			s.clients[ws] = s.persister.CheckAuthToken(v.Token)
+
+			// send back user stats
+			reply := &minemap.MMapToServer{
+				Reply:  s.handleGetStats(s.clients[ws]),
 				Client: ws,
 				Bcast:  false,
 			}
