@@ -138,6 +138,7 @@ ol, ul {
 
 .chatbox {
   overflow: hidden;
+  /* -webkit-transition: width 1s, height 1s, background-color 1s, -webkit-transform 1s; */
 }
 
 .chatdata {
@@ -150,6 +151,7 @@ ol, ul {
   left: 0;
   overflow-y: scroll; 
   overflow-x: hidden;
+  transition: 0.4s;
 }
 
 .chatmsg {
@@ -160,6 +162,8 @@ ol, ul {
    white-space: -o-pre-wrap;   /* Opera 7 */    
    word-wrap: break-word;      /* IE */
 }
+
+/* .hidechatboxbutton {} */
 
 .inputcoord {
   width: 40px;

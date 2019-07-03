@@ -1,5 +1,4 @@
 import React from 'react';
-import ReconnectingWebsocket from 'reconnecting-websocket';
 import { Area } from './area.js'
 import { ChatBox } from './chatbox.js'
 import { RightPanel } from './rightpanel.js'
@@ -11,8 +10,8 @@ const pb = require('./aeilos_pb');
 export class Aeilos extends React.Component {
   constructor(props) {
     super(props);
-    // const socket = new ReconnectingWebsocket('wss://changgeng.me/ws/');
-    const socket = new ReconnectingWebsocket('ws://localhost:8000/ws/');
+    const socket = new WebSocket('wss://changgeng.me/ws/');
+    // const socket = new WebSocket('ws://localhost:8000/ws/');
     this.state = {
       socket: socket,
       x: Math.floor(Math.random() * 200)-100,

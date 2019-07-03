@@ -1,6 +1,10 @@
 import React from 'react';
 
 export class ChatBox extends React.Component {
+  state = {
+    show: true,
+  }
+
   scrollToBottom = () => {
     this.messagesEnd.scrollIntoView({ behavior: "smooth" });
   }
@@ -23,30 +27,41 @@ export class ChatBox extends React.Component {
     });
   }
 
+  hideChatBox() {
+    this.setState({show: !this.state.show})
+    setTimeout(this.scrollToBottom, 400);
+  }
+
   render() {
     return (
-      <div className="chatbox">
-        <h3> Chat room </h3>
-        <div className="chatdata">
-          <div>
-          {this.renderChatData()}
+      <div>
+        <div className="chatbox">
+          <h3> Chat room </h3>
+          <div className="chatdata" style={{ height: (this.state.show ? 400 : 80) }}>
+            <div>
+            {this.renderChatData()}
+            </div>
+            <div style={{ float:"left", clear: "both" }}
+              ref={(el) => { this.messagesEnd = el; }}>
+            </div>
           </div>
-          <div style={{ float:"left", clear: "both" }}
-             ref={(el) => { this.messagesEnd = el; }}>
-          </div>
+          <input 
+            value={this.props.value} 
+            onChange={(e)=>{this.props.handleMsgChange(e)}}
+            onKeyUp={(e)=>{
+              if(e.key==='Enter'){
+                this.props.onClick();
+              }
+            }}
+          />
+          <button 
+            onClick={()=>{this.props.onClick()}}
+          >send</button>
         </div>
-        <input 
-          value={this.props.value} 
-          onChange={(e)=>{this.props.handleMsgChange(e)}}
-          onKeyUp={(e)=>{
-            if(e.key==='Enter'){
-              this.props.onClick();
-            }
-          }}
-        />
-        <button 
-          onClick={()=>{this.props.onClick()}}
-        >send</button>
+      <button
+        className="hidechatboxbutton"
+        onClick={() => { this.hideChatBox() }}
+      >{this.state.show ? "hide" : "show"}</button>
       </div>
     );
   }
