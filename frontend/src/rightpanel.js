@@ -6,7 +6,7 @@ export class RightPanel extends React.Component {
                 return
             }
             return (<div className="login">
-                    <input placeholder="Email" type="email" onChange={this.props.onUsernameChange} />
+                    <input placeholder="Email" type="email" value={this.props.inputemail} onChange={this.props.onUsernameChange} />
                     <input placeholder="Password" value={this.props.password} type="password" onChange={this.props.onPasswdChange} />
                     <button onClick={this.props.onLogin}> Log in </button>
                     <br />

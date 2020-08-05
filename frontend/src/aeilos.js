@@ -21,8 +21,8 @@ export class Aeilos extends React.Component {
       lastWheel: new Date().getTime(),
       chatData: [],
       chatMsg: '',
-      inputemail: '',
-      inputpassword: '',
+      inputemail: 'user1@user1.user1',
+      inputpassword: 'bbb',
       email: '',
       nickName: '',
       leaderBoard: [],
@@ -155,6 +155,9 @@ export class Aeilos extends React.Component {
               let loginresult = response.getLoginresult();
               if (loginresult.getSuccess() === true) {
                 document.cookie = AEILOS_AUTH_TOKEN_NAME+"="+loginresult.getToken();
+                that.setState({
+                  email: that.state.inputemail,
+                });
                 alert(loginresult.getMsg());
               } else {
                 alert(loginresult.getMsg());
@@ -356,6 +359,7 @@ export class Aeilos extends React.Component {
           <RightPanel 
             score={this.state.score}
             email={this.state.email}
+            inputemail={this.state.inputemail}
             password={this.state.inputpassword}
             onLogin={this.handleLogin.bind(this)}
             onLogOut={this.handleLogout.bind(this)}
