@@ -1,4 +1,5 @@
 # aeilos -- an online multi player minesweeper!
+Try it here: https://changgeng.me/aeilos
 
 ## Tasks
 
